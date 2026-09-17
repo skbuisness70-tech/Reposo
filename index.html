@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>MelaMart — everyday shopping</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FDFCFA;
+    --ink:#14213D;
+    --ink-70: rgba(20,33,61,0.7);
+    --ink-45: rgba(20,33,61,0.45);
+    --ink-25: rgba(20,33,61,0.25);
+    --saffron:#FFA630;
+    --saffron-dark:#E8901A;
+    --teal:#0E6E6E;
+    --border:#E7E2D6;
+    --card:#FFFFFF;
+    --danger:#C4432B;
+    --shadow-sm: 0 1px 2px rgba(20,33,61,0.06);
+    --shadow-md: 0 8px 24px rgba(20,33,61,0.10);
+    --shadow-lg: 0 -8px 30px rgba(20,33,61,0.14);
+    --radius-s:8px;
+    --radius-m:16px;
+    --ease: cubic-bezier(.22,.9,.32,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:64px;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,.brand{ font-family:'Fraunces', serif; }
+  button{ font-family:inherit; }
+  :focus-visible{ outline:2px solid var(--teal); outline-offset:2px; }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:40;
+    background:rgba(253,252,250,0.92);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);
+    padding:10px 14px 12px;
+  }
+  .topbar-row{ display:flex; align-items:center; gap:10px; }
+  .brand{ font-size:22px; font-weight:600; color:var(--ink); letter-spacing:-0.02em; white-space:nowrap; }
+  .brand span{ color:var(--saffron-dark); }
+  .search-wrap{ flex:1; position:relative; }
+  .search-wrap input{
+    width:100%; padding:10px 14px 10px 36px;
+    border-radius:999px; border:1px solid var(--border);
+    background:#F4F1E9; font-size:14px; font-family:'Inter',sans-serif;
+    color:var(--ink); outline:none; transition:all .18s var(--ease);
+  }
+  .search-wrap input:focus{ border-color:var(--teal); background:var(--paper); box-shadow:0 0 0 3px rgba(14,110,110,0.1); }
+  .search-icon{ position:absolute; left:12px; top:50%; transform:translateY(-50%); opacity:0.5; font-size:14px; }
+  .icon-btn{
+    position:relative; background:var(--ink); color:var(--paper);
+    border:none; width:40px; height:40px; border-radius:999px;
+    font-size:16px; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; cursor:pointer; transition:transform .12s var(--ease);
+  }
+  .icon-btn:active{ transform:scale(0.9); }
+  .icon-btn.ghost{ background:var(--card); color:var(--ink); border:1px solid var(--border); }
+  .badge-count{
+    position:absolute; top:-4px; right:-4px; background:var(--saffron);
+    color:var(--ink); font-size:10px; font-weight:700; min-width:16px; height:16px;
+    border-radius:999px; display:flex; align-items:center; justify-content:center; padding:0 3px;
+    box-shadow:0 0 0 2px var(--paper);
+  }
+
+  .chips{ display:flex; gap:8px; overflow-x:auto; padding:12px 14px 2px; scrollbar-width:none; }
+  .chips::-webkit-scrollbar{ display:none; }
+  .chip{
+    flex-shrink:0; padding:7px 14px; border-radius:999px;
+    border:1px solid var(--border); background:var(--card);
+    font-size:13px; font-weight:500; color:var(--ink-70);
+    cursor:pointer; white-space:nowrap; transition:all .15s var(--ease);
+  }
+  .chip.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    margin:14px 14px 4px; padding:24px 20px;
+    background:linear-gradient(135deg, var(--ink) 0%, #1E2B52 100%);
+    border-radius:20px; color:var(--paper); position:relative; overflow:hidden;
+    box-shadow:var(--shadow-md);
+  }
+  .hero::after{
+    content:""; position:absolute; right:-40px; top:-40px; width:160px; height:160px;
+    background:var(--saffron); opacity:0.18; border-radius:50%;
+  }
+  .hero-eyebrow{ font-size:12px; color:var(--saffron); font-weight:600; margin-bottom:6px; }
+  .hero h1{ font-size:25px; line-height:1.22; margin:0 0 6px; font-weight:600; max-width:82%; }
+  .hero p{ font-size:13px; color:rgba(253,252,250,0.75); margin:0 0 16px; max-width:78%; }
+  .hero-cta{
+    background:var(--saffron); color:var(--ink); border:none; padding:10px 20px;
+    border-radius:999px; font-weight:600; font-size:13px; cursor:pointer;
+    transition:transform .12s var(--ease);
+  }
+  .hero-cta:active{ transform:scale(0.95); }
+
+  /* ---------- Section headers ---------- */
+  .section-head{ display:flex; align-items:baseline; justify-content:space-between; padding:22px 14px 10px; }
+  .section-head h2{ font-size:19px; margin:0; font-weight:600; }
+  .section-head a{ font-size:12px; color:var(--teal); text-decoration:none; font-weight:600; cursor:pointer; }
+
+  /* ---------- Product grid ---------- */
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 14px 8px; }
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius-m);
+    overflow:hidden; display:flex; flex-direction:column; cursor:pointer;
+    transition:transform .15s var(--ease), box-shadow .15s var(--ease);
+  }
+  .card:hover{ box-shadow:var(--shadow-md); transform:translateY(-2px); }
+  .card:active{ transform:scale(0.98); }
+  .card-img{ width:100%; aspect-ratio:1/1; background:#F1EEE5; display:flex; align-items:center; justify-content:center; font-size:40px; position:relative; }
+  .badge{ position:absolute; top:8px; left:8px; background:var(--danger); color:#fff; font-size:10px; font-weight:700; padding:3px 7px; border-radius:6px; }
+  .fav-btn{ position:absolute; top:6px; right:6px; background:rgba(255,255,255,0.9); border:none; width:28px; height:28px; border-radius:50%; font-size:14px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:transform .12s var(--ease); }
+  .fav-btn:active{ transform:scale(0.85); }
+  .fav-btn.active{ color:var(--danger); }
+  .card-body{ padding:10px 10px 12px; display:flex; flex-direction:column; gap:4px; flex:1; }
+  .card-title{ font-size:13px; font-weight:500; line-height:1.35; color:var(--ink); min-height:35px; }
+  .card-rating{ font-size:11px; color:var(--ink-45); }
+  .card-rating b{ color:var(--teal); }
+  .price-row{ display:flex; align-items:baseline; gap:6px; margin-top:2px; flex-wrap:wrap; }
+  .price{ font-size:15px; font-weight:700; color:var(--ink); }
+  .mrp{ font-size:11px; color:var(--ink-45); text-decoration:line-through; }
+  .off{ font-size:11px; color:var(--teal); font-weight:600; }
+  .add-btn{
+    margin-top:8px; width:100%; padding:9px; border-radius:var(--radius-s);
+    border:1.5px solid var(--ink); background:transparent; color:var(--ink);
+    font-weight:600; font-size:12.5px; cursor:pointer; transition:all .15s var(--ease);
+  }
+  .add-btn.added{ background:var(--teal); border-color:var(--teal); color:#fff; }
+  .add-btn:disabled{ opacity:0.5; cursor:default; }
+
+  /* ---------- Skeletons ---------- */
+  .skeleton-card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius-m); overflow:hidden; }
+  .skeleton-block{ background:linear-gradient(90deg,#EFEBE0 25%,#F6F3EA 37%,#EFEBE0 63%); background-size:400% 100%; animation:shimmer 1.4s ease infinite; }
+  .skeleton-card .skeleton-block:first-child{ width:100%; aspect-ratio:1/1; }
+  .skeleton-lines{ padding:10px; display:flex; flex-direction:column; gap:8px; }
+  .skeleton-lines .skeleton-block{ height:10px; border-radius:5px; }
+  @keyframes shimmer{ 0%{background-position:100% 0;} 100%{background-position:0 0;} }
+
+  /* ---------- Bottom nav ---------- */
+  .bottom-nav{ position:fixed; bottom:0; left:0; right:0; background:var(--paper); border-top:1px solid var(--border); display:flex; z-index:40; padding:6px 0 max(6px, env(safe-area-inset-bottom)); }
+  .nav-item{ flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:10px; color:var(--ink-45); background:none; border:none; cursor:pointer; padding:4px 0; font-weight:500; transition:color .12s var(--ease); }
+  .nav-item.active{ color:var(--ink); }
+  .nav-icon{ font-size:18px; }
+
+  /* ---------- Overlay / Drawer / Modal shared ---------- */
+  .overlay{ position:fixed; inset:0; background:rgba(20,33,61,0.45); z-index:50; opacity:0; pointer-events:none; transition:opacity .25s var(--ease); }
+  .overlay.show{ opacity:1; pointer-events:auto; }
+  .drawer{ position:fixed; top:0; right:0; bottom:0; width:88%; max-width:390px; background:var(--paper); z-index:51; transform:translateX(100%); transition:transform .28s var(--ease); display:flex; flex-direction:column; box-shadow:var(--shadow-lg); }
+  .drawer.show{ transform:translateX(0); }
+  .drawer-head{ padding:16px 16px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .drawer-head h3{ margin:0; font-size:18px; }
+  .close-btn{ background:none; border:none; font-size:20px; cursor:pointer; color:var(--ink-45); }
+  .drawer-body{ flex:1; overflow-y:auto; padding:10px 16px; }
+
+  .cart-item{ display:flex; gap:10px; padding:12px 0; border-bottom:1px solid var(--border); }
+  .cart-item-img{ width:56px; height:56px; border-radius:10px; background:#F1EEE5; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+  .cart-item-info{ flex:1; }
+  .cart-item-title{ font-size:12.5px; font-weight:500; margin-bottom:4px; }
+  .qty-row{ display:flex; align-items:center; gap:8px; }
+  .qty-btn{ width:24px; height:24px; border-radius:7px; border:1px solid var(--border); background:var(--card); font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .qty-val{ font-size:12.5px; font-weight:600; min-width:14px; text-align:center; }
+  .cart-item-price{ font-size:13px; font-weight:700; align-self:flex-start; }
+  .remove-btn{ background:none; border:none; color:var(--danger); font-size:11px; cursor:pointer; padding:0; margin-top:4px; }
+  .drawer-foot{ padding:14px 16px calc(14px + env(safe-area-inset-bottom)); border-top:1px solid var(--border); }
+  .total-row{ display:flex; justify-content:space-between; font-size:13px; color:var(--ink-70); margin-bottom:4px; }
+  .total-row.grand{ font-size:16px; font-weight:700; color:var(--ink); margin-top:6px; }
+  .checkout-btn{ width:100%; margin-top:10px; padding:13px; border-radius:999px; border:none; background:var(--ink); color:var(--paper); font-weight:600; font-size:14.5px; cursor:pointer; transition:transform .12s var(--ease); }
+  .checkout-btn:active{ transform:scale(0.97); }
+  .checkout-btn:disabled{ opacity:0.5; }
+  .empty-state{ text-align:center; padding:60px 20px; color:var(--ink-45); font-size:13px; }
+  .empty-state .emoji{ font-size:36px; display:block; margin-bottom:10px; }
+
+  /* ---------- Product modal ---------- */
+  .modal{ position:fixed; left:0; right:0; bottom:0; z-index:52; background:var(--paper); border-radius:22px 22px 0 0; max-height:88vh; transform:translateY(100%); transition:transform .28s var(--ease); overflow-y:auto; box-shadow:var(--shadow-lg); }
+  .modal.show{ transform:translateY(0); }
+  .modal-drag{ width:36px; height:4px; background:var(--border); border-radius:99px; margin:10px auto; }
+  .modal-img{ font-size:92px; text-align:center; padding:10px 0 4px; }
+  .modal-body{ padding:6px 20px 24px; }
+  .modal-title{ font-size:19px; font-weight:600; margin:0 0 6px; }
+  .modal-desc{ font-size:13px; color:var(--ink-70); line-height:1.55; margin:10px 0 16px; }
+  .modal-price-row{ display:flex; align-items:baseline; gap:8px; margin-top:4px; flex-wrap:wrap; }
+  .modal-price{ font-size:22px; font-weight:700; }
+  .modal-actions{ display:flex; gap:10px; margin-top:18px; }
+  .modal-add{ flex:1; padding:13px; border-radius:999px; border:none; background:var(--saffron); color:var(--ink); font-weight:700; font-size:14px; cursor:pointer; transition:transform .12s var(--ease); }
+  .modal-add:active{ transform:scale(0.97); }
+  .modal-fav{ width:48px; border-radius:999px; border:1.5px solid var(--border); background:var(--card); font-size:18px; cursor:pointer; }
+
+  /* ---------- Auth sheet ---------- */
+  .auth-modal{ position:fixed; left:0; right:0; bottom:0; z-index:53; background:var(--paper); border-radius:22px 22px 0 0; transform:translateY(100%); transition:transform .28s var(--ease); box-shadow:var(--shadow-lg); }
+  .auth-modal.show{ transform:translateY(0); }
+  .auth-body{ padding:6px 22px 28px; }
+  .auth-title{ font-size:20px; font-weight:600; margin:4px 0 4px; }
+  .auth-sub{ font-size:13px; color:var(--ink-45); margin:0 0 18px; }
+  .field{ margin-bottom:12px; }
+  .field label{ font-size:12px; font-weight:600; color:var(--ink-70); display:block; margin-bottom:5px; }
+  .field input{ width:100%; padding:11px 13px; border-radius:10px; border:1px solid var(--border); background:#F4F1E9; font-size:14px; font-family:'Inter',sans-serif; outline:none; transition:all .15s var(--ease); }
+  .field input:focus{ border-color:var(--teal); background:var(--paper); box-shadow:0 0 0 3px rgba(14,110,110,0.1); }
+  .auth-error{ background:#FBEAE5; color:var(--danger); font-size:12.5px; padding:9px 12px; border-radius:8px; margin-bottom:12px; display:none; }
+  .auth-submit{ width:100%; padding:13px; border-radius:999px; border:none; background:var(--ink); color:var(--paper); font-weight:600; font-size:14.5px; cursor:pointer; margin-top:4px; }
+  .auth-switch{ text-align:center; font-size:12.5px; color:var(--ink-45); margin-top:14px; }
+  .auth-switch a{ color:var(--teal); font-weight:600; text-decoration:none; cursor:pointer; }
+
+  /* ---------- Toast ---------- */
+  .toast{ position:fixed; bottom:76px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--ink); color:var(--paper); padding:10px 18px; border-radius:999px; font-size:12.5px; font-weight:500; z-index:60; opacity:0; transition:all .28s var(--ease); pointer-events:none; box-shadow:var(--shadow-md); }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  @media (min-width:600px){ .grid{ grid-template-columns:repeat(3,1fr); } }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-row">
+      <div class="brand">Mela<span>Mart</span></div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search for products, brands...">
+      </div>
+      <button class="icon-btn ghost" id="accountBtn" onclick="onAccountClick()">👤</button>
+      <button class="icon-btn" onclick="openCart()">🛍️<span class="badge-count" id="cartCount">0</span></button>
+    </div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-eyebrow">Today only</div>
+    <h1>Up to 60% off small‑batch finds</h1>
+    <p>Curated home, tech and style picks — restocked daily.</p>
+    <button class="hero-cta" onclick="document.getElementById('gridHead').scrollIntoView({behavior:'smooth'})">Shop the drop</button>
+  </div>
+
+  <div class="section-head" id="gridHead">
+    <h2 id="gridTitle">All products</h2>
+    <a id="clearFilter" style="display:none" onclick="clearFilters()">Clear filter</a>
+  </div>
+  <div class="grid" id="productGrid"></div>
+
+  <div class="bottom-nav">
+    <button class="nav-item active"><span class="nav-icon">🏠</span>Home</button>
+    <button class="nav-item" onclick="document.getElementById('chips').scrollIntoView({behavior:'smooth'})"><span class="nav-icon">📦</span>Categories</button>
+    <button class="nav-item" onclick="openCart()"><span class="nav-icon">🛍️</span>Cart</button>
+    <button class="nav-item" onclick="onAccountClick()"><span class="nav-icon">👤</span>Account</button>
+  </div>
+
+  <div class="overlay" id="overlay" onclick="closeAll()"></div>
+
+  <!-- Cart drawer -->
+  <div class="drawer" id="cartDrawer">
+    <div class="drawer-head"><h3>Your cart</h3><button class="close-btn" onclick="closeAll()">✕</button></div>
+    <div class="drawer-body" id="cartBody"></div>
+    <div class="drawer-foot" id="cartFoot"></div>
+  </div>
+
+  <!-- Product quick view -->
+  <div class="modal" id="productModal">
+    <div class="modal-drag"></div>
+    <div class="modal-img" id="modalImg"></div>
+    <div class="modal-body">
+      <h3 class="modal-title" id="modalTitle"></h3>
+      <div class="card-rating" id="modalRating"></div>
+      <div class="modal-price-row">
+        <div class="modal-price" id="modalPrice"></div>
+        <div class="mrp" id="modalMrp"></div>
+        <div class="off" id="modalOff"></div>
+      </div>
+      <p class="modal-desc" id="modalDesc"></p>
+      <div class="modal-actions">
+        <button class="modal-fav" id="modalFavBtn">♡</button>
+        <button class="modal-add" id="modalAddBtn">Add to cart</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth sheet -->
+  <div class="auth-modal" id="authModal">
+    <div class="modal-drag"></div>
+    <div class="auth-body">
+      <div class="auth-title" id="authTitle">Log in</div>
+      <p class="auth-sub" id="authSub">Log in to save your cart and track orders.</p>
+      <div class="auth-error" id="authError"></div>
+      <form id="authForm">
+        <div class="field" id="nameField" style="display:none">
+          <label>Full name</label>
+          <input type="text" id="authName" autocomplete="name">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="authEmail" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" id="authPassword" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="auth-submit" id="authSubmitBtn">Log in</button>
+      </form>
+      <div class="auth-switch" id="authSwitch">New to MelaMart? <a onclick="toggleAuthMode()">Create an account</a></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  // ============================================================
+  // CONFIG — point this at your running backend (see backend/server.js)
+  // ============================================================
+  const API_BASE = "http://localhost:4000/api";
+
+  const CATEGORIES = ["All","Electronics","Fashion","Home","Beauty","Sports","Books"];
+
+  let PRODUCTS = [];          // loaded from backend
+  let cart = [];              // loaded from backend when logged in
+  let activeCategory = "All";
+  let searchTerm = "";
+  let currentUser = JSON.parse(localStorage.getItem('mm_user') || 'null');
+  let authToken = localStorage.getItem('mm_token') || null;
+  let authMode = 'login';     // 'login' | 'signup'
+  let favourites = new Set(JSON.parse(localStorage.getItem('mm_favs') || '[]'));
+
+  function money(n){ return '₹' + Number(n).toLocaleString('en-IN'); }
+
+  function authHeaders(){
+    return authToken ? { 'Authorization': 'Bearer ' + authToken } : {};
+  }
+
+  // ---------------- API calls ----------------
+  async function api(path, options = {}){
+    const res = await fetch(API_BASE + path, {
+      ...options,
+      headers: { 'Content-Type': 'application/json', ...authHeaders(), ...(options.headers||{}) },
+      body: options.body ? JSON.stringify(options.body) : undefined
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok) throw new Error(data.error || 'Something went wrong');
+    return data;
+  }
+
+  async function loadProducts(){
+    const grid = document.getElementById('productGrid');
+    grid.innerHTML = Array.from({length:6}).map(()=>`
+      <div class="skeleton-card">
+        <div class="skeleton-block"></div>
+        <div class="skeleton-lines">
+          <div class="skeleton-block" style="width:90%"></div>
+          <div class="skeleton-block" style="width:60%"></div>
+          <div class="skeleton-block" style="width:40%"></div>
+        </div>
+      </div>
+    `).join('');
+    try{
+      const qs = new URLSearchParams();
+      if(activeCategory!=='All') qs.set('category', activeCategory);
+      if(searchTerm) qs.set('search', searchTerm);
+      PRODUCTS = await api('/products?' + qs.toString());
+      renderGrid();
+    }catch(e){
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 10px;color:var(--danger);font-size:13px;">
+        Couldn't reach the server (${e.message}). Is the backend running on localhost:4000?
+      </div>`;
+    }
+  }
+
+  async function loadCart(){
+    if(!authToken){ cart = []; updateCartCount(); return; }
+    try{ cart = await api('/cart'); }catch{ cart = []; }
+    updateCartCount();
+  }
+
+  // ---------------- Chips / filters ----------------
+  const chipsEl = document.getElementById('chips');
+  CATEGORIES.forEach(cat=>{
+    const b = document.createElement('button');
+    b.className = 'chip' + (cat==='All' ? ' active' : '');
+    b.textContent = cat;
+    b.dataset.cat = cat;
+    b.onclick = ()=>{ activeCategory = cat; renderChips(); loadProducts(); };
+    chipsEl.appendChild(b);
+  });
+  function renderChips(){
+    [...chipsEl.children].forEach(c=> c.classList.toggle('active', c.dataset.cat === activeCategory));
+    document.getElementById('gridTitle').textContent = activeCategory === 'All' ? 'All products' : activeCategory;
+    document.getElementById('clearFilter').style.display = (activeCategory === 'All' && !searchTerm) ? 'none' : 'inline';
+  }
+  function clearFilters(){
+    activeCategory = 'All'; searchTerm=''; document.getElementById('searchInput').value='';
+    renderChips(); loadProducts();
+  }
+  let searchDebounce;
+  document.getElementById('searchInput').addEventListener('input', (e)=>{
+    searchTerm = e.target.value.trim().toLowerCase();
+    renderChips();
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(loadProducts, 300);
+  });
+
+  // ---------------- Render grid ----------------
+  function renderGrid(){
+    const grid = document.getElementById('productGrid');
+    if(PRODUCTS.length===0){
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 10px;color:var(--ink-45);font-size:13px;">No products match your search.</div>';
+      return;
+    }
+    grid.innerHTML = PRODUCTS.map(p=>{
+      const off = Math.round((1 - p.price/p.mrp)*100);
+      const isFav = favourites.has(p.id);
+      return `
+        <div class="card">
+          <div class="card-img" onclick="openProduct(${p.id})">
+            ${p.badge ? `<span class="badge">${p.badge}</span>` : ''}
+            <button class="fav-btn ${isFav?'active':''}" onclick="event.stopPropagation(); toggleFav(${p.id}, this)">${isFav?'♥':'♡'}</button>
+            ${p.emoji}
+          </div>
+          <div class="card-body">
+            <div class="card-title" onclick="openProduct(${p.id})">${p.title}</div>
+            <div class="card-rating">★ <b>${p.rating}</b> (${Number(p.reviews).toLocaleString('en-IN')})</div>
+            <div class="price-row">
+              <span class="price">${money(p.price)}</span>
+              <span class="mrp">${money(p.mrp)}</span>
+              <span class="off">${off}% off</span>
+            </div>
+            <button class="add-btn" onclick="addToCart(${p.id}, this)">Add to cart</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function toggleFav(id, btn){
+    if(favourites.has(id)){ favourites.delete(id); btn.classList.remove('active'); btn.textContent='♡'; }
+    else{ favourites.add(id); btn.classList.add('active'); btn.textContent='♥'; }
+    localStorage.setItem('mm_favs', JSON.stringify([...favourites]));
+  }
+
+  // ---------------- Cart ----------------
+  async function addToCart(id, btn){
+    if(!authToken){ showToast('Log in to add items to your cart'); openAuth('login'); return; }
+    if(btn){ btn.disabled = true; btn.textContent = 'Adding…'; }
+    try{
+      await api('/cart', { method:'POST', body:{ productId:id, qty:1 } });
+      await loadCart();
+      showToast('Added to cart');
+      if(btn){ btn.textContent='Added ✓'; btn.classList.add('added'); }
+    }catch(e){
+      showToast(e.message);
+      if(btn) btn.textContent='Add to cart';
+    }finally{
+      if(btn){
+        btn.disabled = false;
+        setTimeout(()=>{ btn.textContent='Add to cart'; btn.classList.remove('added'); }, 1200);
+      }
+    }
+  }
+
+  async function changeQty(productId, delta){
+    const item = cart.find(c=>c.productId===productId);
+    if(!item) return;
+    const newQty = item.qty + delta;
+    try{
+      await api('/cart/' + productId, { method:'PUT', body:{ qty:newQty } });
+      await loadCart();
+      renderCartDrawer();
+    }catch(e){ showToast(e.message); }
+  }
+
+  async function removeItem(productId){
+    try{
+      await api('/cart/' + productId, { method:'DELETE' });
+      await loadCart();
+      renderCartDrawer();
+    }catch(e){ showToast(e.message); }
+  }
+
+  function updateCartCount(){
+    const total = cart.reduce((a,c)=>a+c.qty,0);
+    document.getElementById('cartCount').textContent = total;
+  }
+
+  function renderCartDrawer(){
+    const body = document.getElementById('cartBody');
+    const foot = document.getElementById('cartFoot');
+    if(!authToken){
+      body.innerHTML = `<div class="empty-state"><span class="emoji">🔒</span>Log in to view and save your cart.</div>`;
+      foot.innerHTML = `<button class="checkout-btn" onclick="closeAll(); openAuth('login')">Log in</button>`;
+      return;
+    }
+    if(cart.length===0){
+      body.innerHTML = `<div class="empty-state"><span class="emoji">🛍️</span>Your cart is empty.<br>Start adding things you love.</div>`;
+      foot.innerHTML = '';
+      return;
+    }
+    let subtotal = 0;
+    body.innerHTML = cart.map(item=>{
+      subtotal += item.price * item.qty;
+      return `
+        <div class="cart-item">
+          <div class="cart-item-img">${item.emoji}</div>
+          <div class="cart-item-info">
+            <div class="cart-item-title">${item.title}</div>
+            <div class="qty-row">
+              <button class="qty-btn" onclick="changeQty(${item.productId},-1)">−</button>
+              <span class="qty-val">${item.qty}</span>
+              <button class="qty-btn" onclick="changeQty(${item.productId},1)">+</button>
+            </div>
+            <button class="remove-btn" onclick="removeItem(${item.productId})">Remove</button>
+          </div>
+          <div class="cart-item-price">${money(item.price*item.qty)}</div>
+        </div>
+      `;
+    }).join('');
+    const delivery = subtotal > 999 ? 0 : 49;
+    const total = subtotal + delivery;
+    foot.innerHTML = `
+      <div class="total-row"><span>Subtotal</span><span>${money(subtotal)}</span></div>
+      <div class="total-row"><span>Delivery</span><span>${delivery===0?'Free':money(delivery)}</span></div>
+      <div class="total-row grand"><span>Total</span><span>${money(total)}</span></div>
+      <button class="checkout-btn" onclick="checkout()">Checkout · ${money(total)}</button>
+    `;
+  }
+
+  async function checkout(){
+    try{
+      const order = await api('/orders', { method:'POST' });
+      await loadCart();
+      renderCartDrawer();
+      showToast(`Order #${order.orderId} placed — ${money(order.total)}`);
+    }catch(e){ showToast(e.message); }
+  }
+
+  // ---------------- Drawer / modal open-close ----------------
+  function openCart(){ renderCartDrawer(); showOverlay(); document.getElementById('cartDrawer').classList.add('show'); }
+  function showOverlay(){ document.getElementById('overlay').classList.add('show'); }
+  function closeAll(){
+    document.getElementById('overlay').classList.remove('show');
+    document.getElementById('cartDrawer').classList.remove('show');
+    document.getElementById('productModal').classList.remove('show');
+    document.getElementById('authModal').classList.remove('show');
+  }
+
+  function openProduct(id){
+    const p = PRODUCTS.find(x=>x.id===id);
+    if(!p) return;
+    document.getElementById('modalImg').textContent = p.emoji;
+    document.getElementById('modalTitle').textContent = p.title;
+    document.getElementById('modalRating').innerHTML = `★ <b>${p.rating}</b> (${Number(p.reviews).toLocaleString('en-IN')} reviews)`;
+    document.getElementById('modalPrice').textContent = money(p.price);
+    document.getElementById('modalMrp').textContent = money(p.mrp);
+    document.getElementById('modalOff').textContent = Math.round((1-p.price/p.mrp)*100) + '% off';
+    document.getElementById('modalDesc').textContent = p.description;
+    const favBtn = document.getElementById('modalFavBtn');
+    favBtn.textContent = favourites.has(p.id) ? '♥' : '♡';
+    favBtn.onclick = ()=> toggleFav(p.id, favBtn);
+    document.getElementById('modalAddBtn').onclick = (e)=> addToCart(p.id, null);
+    showOverlay();
+    document.getElementById('productModal').classList.add('show');
+  }
+
+  // ---------------- Auth ----------------
+  function onAccountClick(){
+    if(currentUser){
+      if(confirm(`Logged in as ${currentUser.name}. Log out?`)) logout();
+    } else {
+      openAuth('login');
+    }
+  }
+  function openAuth(mode){
+    authMode = mode;
+    updateAuthUI();
+    showOverlay();
+    document.getElementById('authModal').classList.add('show');
+  }
+  function toggleAuthMode(){
+    authMode = authMode === 'login' ? 'signup' : 'login';
+    updateAuthUI();
+  }
+  function updateAuthUI(){
+    const isSignup = authMode === 'signup';
+    document.getElementById('authTitle').textContent = isSignup ? 'Create your account' : 'Log in';
+    document.getElementById('authSub').textContent = isSignup
+      ? 'Save your cart, track orders, and check out faster.'
+      : 'Log in to save your cart and track orders.';
+    document.getElementById('nameField').style.display = isSignup ? 'block' : 'none';
+    document.getElementById('authSubmitBtn').textContent = isSignup ? 'Create account' : 'Log in';
+    document.getElementById('authSwitch').innerHTML = isSignup
+      ? 'Already have an account? <a onclick="toggleAuthMode()">Log in</a>'
+      : 'New to MelaMart? <a onclick="toggleAuthMode()">Create an account</a>';
+    document.getElementById('authError').style.display = 'none';
+  }
+  document.getElementById('authForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const name = document.getElementById('authName').value.trim();
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    const errBox = document.getElementById('authError');
+    errBox.style.display = 'none';
+    try{
+      const path = authMode === 'signup' ? '/auth/signup' : '/auth/login';
+      const body = authMode === 'signup' ? { name, email, password } : { email, password };
+      const data = await api(path, { method:'POST', body });
+      authToken = data.token; currentUser = data.user;
+      localStorage.setItem('mm_token', authToken);
+      localStorage.setItem('mm_user', JSON.stringify(currentUser));
+      closeAll();
+      showToast(`Welcome, ${currentUser.name.split(' ')[0]}!`);
+      await loadCart();
+    }catch(err){
+      errBox.textContent = err.message;
+      errBox.style.display = 'block';
+    }
+  });
+  function logout(){
+    authToken = null; currentUser = null; cart = [];
+    localStorage.removeItem('mm_token'); localStorage.removeItem('mm_user');
+    updateCartCount();
+    showToast('Logged out');
+  }
+
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 2000);
+  }
+
+  // ---------------- Init ----------------
+  renderChips();
+  loadProducts();
+  loadCart();
+</script>
+</body>
+</html>

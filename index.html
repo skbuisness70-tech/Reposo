@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
-<title>MelaMart — everyday shopping</title>
+<title>Reposo — everyday shopping</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -39,6 +39,7 @@
   h1,h2,h3,.brand{ font-family:'Fraunces', serif; }
   button{ font-family:inherit; }
   :focus-visible{ outline:2px solid var(--teal); outline-offset:2px; }
+  img{ -webkit-user-drag:none; user-select:none; }
 
   /* ---------- Top bar ---------- */
   .topbar{
@@ -72,8 +73,19 @@
     position:absolute; top:-4px; right:-4px; background:var(--saffron);
     color:var(--ink); font-size:10px; font-weight:700; min-width:16px; height:16px;
     border-radius:999px; display:flex; align-items:center; justify-content:center; padding:0 3px;
-    box-shadow:0 0 0 2px var(--paper);
+    box-shadow:0 0 0 2px var(--paper); transition:transform .25s cubic-bezier(.34,1.56,.64,1);
   }
+  .badge-count.bump{ transform:scale(1.5); }
+  .fly-dot{ position:fixed; z-index:70; border-radius:50%; pointer-events:none; object-fit:cover; box-shadow:0 4px 14px rgba(20,33,61,0.3); }
+  .stock-tag{ font-size:11px; font-weight:600; color:var(--danger); display:flex; align-items:center; gap:4px; }
+  .stock-tag::before{ content:"●"; font-size:8px; animation:pulseDot 1.4s ease infinite; }
+  @keyframes pulseDot{ 0%,100%{opacity:1;} 50%{opacity:.3;} }
+  .recent-scroll{ display:flex; gap:10px; overflow-x:auto; padding:0 14px 4px; scrollbar-width:none; }
+  .recent-scroll::-webkit-scrollbar{ display:none; }
+  .recent-card{ flex-shrink:0; width:88px; cursor:pointer; }
+  .recent-img{ width:88px; height:88px; border-radius:12px; overflow:hidden; background:#F1EEE5; border:1px solid var(--border); }
+  .recent-img img{ width:100%; height:100%; object-fit:cover; }
+  .recent-title{ font-size:10.5px; margin-top:5px; line-height:1.3; color:var(--ink-70); }
 
   .chips{ display:flex; gap:8px; overflow-x:auto; padding:12px 14px 2px; scrollbar-width:none; }
   .chips::-webkit-scrollbar{ display:none; }
@@ -85,31 +97,47 @@
   }
   .chip.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
 
-  /* ---------- Hero ---------- */
+  /* ---------- Hero carousel ---------- */
+  .hero-wrap{ margin:14px 14px 4px; position:relative; border-radius:20px; overflow:hidden; box-shadow:var(--shadow-md); }
+  .hero-track{ display:flex; transition:transform .4s var(--ease); }
   .hero{
-    margin:14px 14px 4px; padding:24px 20px;
-    background:linear-gradient(135deg, var(--ink) 0%, #1E2B52 100%);
-    border-radius:20px; color:var(--paper); position:relative; overflow:hidden;
-    box-shadow:var(--shadow-md);
+    flex:0 0 100%; min-height:190px; padding:24px 20px;
+    background-size:cover; background-position:center;
+    color:var(--paper); position:relative; display:flex; flex-direction:column; justify-content:flex-end;
   }
-  .hero::after{
-    content:""; position:absolute; right:-40px; top:-40px; width:160px; height:160px;
-    background:var(--saffron); opacity:0.18; border-radius:50%;
+  .hero::before{
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(20,33,61,0.15) 0%, rgba(20,33,61,0.85) 100%);
   }
+  .hero-content{ position:relative; z-index:1; }
   .hero-eyebrow{ font-size:12px; color:var(--saffron); font-weight:600; margin-bottom:6px; }
-  .hero h1{ font-size:25px; line-height:1.22; margin:0 0 6px; font-weight:600; max-width:82%; }
-  .hero p{ font-size:13px; color:rgba(253,252,250,0.75); margin:0 0 16px; max-width:78%; }
+  .hero h1{ font-size:24px; line-height:1.22; margin:0 0 6px; font-weight:600; max-width:88%; }
+  .hero p{ font-size:13px; color:rgba(253,252,250,0.8); margin:0 0 16px; max-width:82%; }
   .hero-cta{
     background:var(--saffron); color:var(--ink); border:none; padding:10px 20px;
     border-radius:999px; font-weight:600; font-size:13px; cursor:pointer;
-    transition:transform .12s var(--ease);
+    transition:transform .12s var(--ease); align-self:flex-start;
   }
   .hero-cta:active{ transform:scale(0.95); }
+  .hero-dots{ position:absolute; bottom:12px; right:16px; z-index:2; display:flex; gap:6px; }
+  .hero-dot{ width:6px; height:6px; border-radius:50%; background:rgba(253,252,250,0.4); transition:all .25s var(--ease); cursor:pointer; }
+  .hero-dot.active{ width:16px; background:var(--saffron); }
 
   /* ---------- Section headers ---------- */
   .section-head{ display:flex; align-items:baseline; justify-content:space-between; padding:22px 14px 10px; }
   .section-head h2{ font-size:19px; margin:0; font-weight:600; }
   .section-head a{ font-size:12px; color:var(--teal); text-decoration:none; font-weight:600; cursor:pointer; }
+
+  /* ---------- Sort bar ---------- */
+  .sort-bar{ display:flex; align-items:center; gap:8px; padding:0 14px 12px; overflow-x:auto; scrollbar-width:none; }
+  .sort-bar::-webkit-scrollbar{ display:none; }
+  .sort-label{ font-size:11px; color:var(--ink-45); flex-shrink:0; }
+  .sort-chip{
+    flex-shrink:0; padding:6px 12px; border-radius:999px; border:1px solid var(--border);
+    background:var(--card); font-size:12px; font-weight:500; color:var(--ink-70); cursor:pointer;
+    white-space:nowrap; transition:all .15s var(--ease);
+  }
+  .sort-chip.active{ background:rgba(14,110,110,0.1); border-color:var(--teal); color:var(--teal); }
 
   /* ---------- Product grid ---------- */
   .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 14px 8px; }
@@ -120,15 +148,19 @@
   }
   .card:hover{ box-shadow:var(--shadow-md); transform:translateY(-2px); }
   .card:active{ transform:scale(0.98); }
-  .card-img{ width:100%; aspect-ratio:1/1; background:#F1EEE5; display:flex; align-items:center; justify-content:center; font-size:40px; position:relative; }
-  .badge{ position:absolute; top:8px; left:8px; background:var(--danger); color:#fff; font-size:10px; font-weight:700; padding:3px 7px; border-radius:6px; }
-  .fav-btn{ position:absolute; top:6px; right:6px; background:rgba(255,255,255,0.9); border:none; width:28px; height:28px; border-radius:50%; font-size:14px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:transform .12s var(--ease); }
+  .card-img-wrap{ width:100%; aspect-ratio:1/1; background:#F1EEE5; position:relative; overflow:hidden; }
+  .card-img-wrap img{ width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .35s var(--ease), transform .3s var(--ease); }
+  .card-img-wrap img.loaded{ opacity:1; }
+  .card:hover .card-img-wrap img{ transform:scale(1.06); }
+  .badge{ position:absolute; top:8px; left:8px; background:var(--danger); color:#fff; font-size:10px; font-weight:700; padding:3px 7px; border-radius:6px; z-index:2; }
+  .fav-btn{ position:absolute; top:6px; right:6px; background:rgba(255,255,255,0.9); border:none; width:28px; height:28px; border-radius:50%; font-size:14px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:transform .12s var(--ease); z-index:2; }
   .fav-btn:active{ transform:scale(0.85); }
   .fav-btn.active{ color:var(--danger); }
   .card-body{ padding:10px 10px 12px; display:flex; flex-direction:column; gap:4px; flex:1; }
   .card-title{ font-size:13px; font-weight:500; line-height:1.35; color:var(--ink); min-height:35px; }
-  .card-rating{ font-size:11px; color:var(--ink-45); }
-  .card-rating b{ color:var(--teal); }
+  .stars{ font-size:11px; letter-spacing:1px; color:var(--saffron-dark); }
+  .stars .empty{ color:var(--border); }
+  .card-rating{ font-size:11px; color:var(--ink-45); display:flex; align-items:center; gap:4px; }
   .price-row{ display:flex; align-items:baseline; gap:6px; margin-top:2px; flex-wrap:wrap; }
   .price{ font-size:15px; font-weight:700; color:var(--ink); }
   .mrp{ font-size:11px; color:var(--ink-45); text-decoration:line-through; }
@@ -151,7 +183,7 @@
 
   /* ---------- Bottom nav ---------- */
   .bottom-nav{ position:fixed; bottom:0; left:0; right:0; background:var(--paper); border-top:1px solid var(--border); display:flex; z-index:40; padding:6px 0 max(6px, env(safe-area-inset-bottom)); }
-  .nav-item{ flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:10px; color:var(--ink-45); background:none; border:none; cursor:pointer; padding:4px 0; font-weight:500; transition:color .12s var(--ease); }
+  .nav-item{ flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:10px; color:var(--ink-45); background:none; border:none; cursor:pointer; padding:4px 0; font-weight:500; transition:color .12s var(--ease); position:relative; }
   .nav-item.active{ color:var(--ink); }
   .nav-icon{ font-size:18px; }
 
@@ -166,7 +198,8 @@
   .drawer-body{ flex:1; overflow-y:auto; padding:10px 16px; }
 
   .cart-item{ display:flex; gap:10px; padding:12px 0; border-bottom:1px solid var(--border); }
-  .cart-item-img{ width:56px; height:56px; border-radius:10px; background:#F1EEE5; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+  .cart-item-img{ width:56px; height:56px; border-radius:10px; background:#F1EEE5; flex-shrink:0; overflow:hidden; }
+  .cart-item-img img{ width:100%; height:100%; object-fit:cover; }
   .cart-item-info{ flex:1; }
   .cart-item-title{ font-size:12.5px; font-weight:500; margin-bottom:4px; }
   .qty-row{ display:flex; align-items:center; gap:8px; }
@@ -184,11 +217,19 @@
   .empty-state .emoji{ font-size:36px; display:block; margin-bottom:10px; }
 
   /* ---------- Product modal ---------- */
-  .modal{ position:fixed; left:0; right:0; bottom:0; z-index:52; background:var(--paper); border-radius:22px 22px 0 0; max-height:88vh; transform:translateY(100%); transition:transform .28s var(--ease); overflow-y:auto; box-shadow:var(--shadow-lg); }
+  .modal{ position:fixed; left:0; right:0; bottom:0; z-index:52; background:var(--paper); border-radius:22px 22px 0 0; max-height:90vh; transform:translateY(100%); transition:transform .28s var(--ease); overflow-y:auto; box-shadow:var(--shadow-lg); }
   .modal.show{ transform:translateY(0); }
   .modal-drag{ width:36px; height:4px; background:var(--border); border-radius:99px; margin:10px auto; }
-  .modal-img{ font-size:92px; text-align:center; padding:10px 0 4px; }
-  .modal-body{ padding:6px 20px 24px; }
+  .modal-gallery{ width:100%; aspect-ratio:1.3/1; background:#F1EEE5; position:relative; overflow:hidden; }
+  .modal-gallery img{ width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity .35s var(--ease); }
+  .modal-gallery img.loaded{ opacity:1; }
+  .modal-thumbs{ display:flex; gap:8px; padding:10px 20px 0; overflow-x:auto; scrollbar-width:none; }
+  .modal-thumbs::-webkit-scrollbar{ display:none; }
+  .modal-thumb{ width:54px; height:54px; border-radius:10px; overflow:hidden; flex-shrink:0; border:2px solid transparent; cursor:pointer; opacity:0.6; transition:all .15s var(--ease); }
+  .modal-thumb.active{ border-color:var(--teal); opacity:1; }
+  .modal-thumb img{ width:100%; height:100%; object-fit:cover; }
+  .modal-body{ padding:14px 20px 24px; }
+  .modal-cat{ font-size:11px; color:var(--teal); font-weight:600; margin-bottom:4px; }
   .modal-title{ font-size:19px; font-weight:600; margin:0 0 6px; }
   .modal-desc{ font-size:13px; color:var(--ink-70); line-height:1.55; margin:10px 0 16px; }
   .modal-price-row{ display:flex; align-items:baseline; gap:8px; margin-top:4px; flex-wrap:wrap; }
@@ -197,6 +238,14 @@
   .modal-add{ flex:1; padding:13px; border-radius:999px; border:none; background:var(--saffron); color:var(--ink); font-weight:700; font-size:14px; cursor:pointer; transition:transform .12s var(--ease); }
   .modal-add:active{ transform:scale(0.97); }
   .modal-fav{ width:48px; border-radius:999px; border:1.5px solid var(--border); background:var(--card); font-size:18px; cursor:pointer; }
+  .related-head{ font-size:14px; font-weight:600; margin:22px 0 10px; }
+  .related-scroll{ display:flex; gap:10px; overflow-x:auto; margin:0 -20px; padding:0 20px 4px; scrollbar-width:none; }
+  .related-scroll::-webkit-scrollbar{ display:none; }
+  .related-card{ flex-shrink:0; width:120px; cursor:pointer; }
+  .related-img{ width:120px; height:120px; border-radius:12px; overflow:hidden; background:#F1EEE5; }
+  .related-img img{ width:100%; height:100%; object-fit:cover; }
+  .related-title{ font-size:11.5px; margin-top:6px; line-height:1.3; color:var(--ink-70); }
+  .related-price{ font-size:12px; font-weight:700; margin-top:2px; }
 
   /* ---------- Auth sheet ---------- */
   .auth-modal{ position:fixed; left:0; right:0; bottom:0; z-index:53; background:var(--paper); border-radius:22px 22px 0 0; transform:translateY(100%); transition:transform .28s var(--ease); box-shadow:var(--shadow-lg); }
@@ -213,6 +262,18 @@
   .auth-switch{ text-align:center; font-size:12.5px; color:var(--ink-45); margin-top:14px; }
   .auth-switch a{ color:var(--teal); font-weight:600; text-decoration:none; cursor:pointer; }
 
+  /* ---------- Order success ---------- */
+  .success-modal{ position:fixed; left:0; right:0; bottom:0; z-index:54; background:var(--paper); border-radius:22px 22px 0 0; transform:translateY(100%); transition:transform .3s var(--ease); box-shadow:var(--shadow-lg); }
+  .success-modal.show{ transform:translateY(0); }
+  .success-body{ padding:36px 26px 30px; text-align:center; }
+  .success-check{ width:64px; height:64px; border-radius:50%; background:var(--teal); color:#fff; font-size:30px; display:flex; align-items:center; justify-content:center; margin:0 auto 18px; transform:scale(0); animation:pop .4s var(--ease) .1s forwards; }
+  @keyframes pop{ to{ transform:scale(1); } }
+  .success-title{ font-size:20px; font-weight:600; margin:0 0 6px; }
+  .success-sub{ font-size:13px; color:var(--ink-45); margin:0 0 4px; }
+  .success-order-id{ font-size:13px; color:var(--teal); font-weight:600; margin:10px 0 4px; }
+  .success-delivery{ font-size:12.5px; color:var(--ink-45); margin-bottom:22px; }
+  .success-btn{ width:100%; padding:13px; border-radius:999px; border:none; background:var(--ink); color:var(--paper); font-weight:600; font-size:14px; cursor:pointer; }
+
   /* ---------- Toast ---------- */
   .toast{ position:fixed; bottom:76px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--ink); color:var(--paper); padding:10px 18px; border-radius:999px; font-size:12.5px; font-weight:500; z-index:60; opacity:0; transition:all .28s var(--ease); pointer-events:none; box-shadow:var(--shadow-md); }
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
@@ -224,28 +285,29 @@
 
   <div class="topbar">
     <div class="topbar-row">
-      <div class="brand">Mela<span>Mart</span></div>
+      <div class="brand">Repo<span>so</span></div>
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
         <input type="text" id="searchInput" placeholder="Search for products, brands...">
       </div>
       <button class="icon-btn ghost" id="accountBtn" onclick="onAccountClick()">👤</button>
-      <button class="icon-btn" onclick="openCart()">🛍️<span class="badge-count" id="cartCount">0</span></button>
+      <button class="icon-btn" id="cartIconBtn" onclick="openCart()">🛍️<span class="badge-count" id="cartCount">0</span></button>
     </div>
     <div class="chips" id="chips"></div>
   </div>
 
-  <div class="hero">
-    <div class="hero-eyebrow">Today only</div>
-    <h1>Up to 60% off small‑batch finds</h1>
-    <p>Curated home, tech and style picks — restocked daily.</p>
-    <button class="hero-cta" onclick="document.getElementById('gridHead').scrollIntoView({behavior:'smooth'})">Shop the drop</button>
+  <div class="hero-wrap" id="heroWrap">
+    <div class="hero-track" id="heroTrack"></div>
+    <div class="hero-dots" id="heroDots"></div>
   </div>
+
+  <div id="recentWrap"></div>
 
   <div class="section-head" id="gridHead">
     <h2 id="gridTitle">All products</h2>
     <a id="clearFilter" style="display:none" onclick="clearFilters()">Clear filter</a>
   </div>
+  <div class="sort-bar" id="sortBar"></div>
   <div class="grid" id="productGrid"></div>
 
   <div class="bottom-nav">
@@ -267,8 +329,10 @@
   <!-- Product quick view -->
   <div class="modal" id="productModal">
     <div class="modal-drag"></div>
-    <div class="modal-img" id="modalImg"></div>
+    <div class="modal-gallery" id="modalGallery"></div>
+    <div class="modal-thumbs" id="modalThumbs"></div>
     <div class="modal-body">
+      <div class="modal-cat" id="modalCat"></div>
       <h3 class="modal-title" id="modalTitle"></h3>
       <div class="card-rating" id="modalRating"></div>
       <div class="modal-price-row">
@@ -276,11 +340,13 @@
         <div class="mrp" id="modalMrp"></div>
         <div class="off" id="modalOff"></div>
       </div>
+      <div class="stock-tag" id="modalStock" style="margin-top:6px"></div>
       <p class="modal-desc" id="modalDesc"></p>
       <div class="modal-actions">
         <button class="modal-fav" id="modalFavBtn">♡</button>
         <button class="modal-add" id="modalAddBtn">Add to cart</button>
       </div>
+      <div id="relatedWrap"></div>
     </div>
   </div>
 
@@ -306,7 +372,20 @@
         </div>
         <button type="submit" class="auth-submit" id="authSubmitBtn">Log in</button>
       </form>
-      <div class="auth-switch" id="authSwitch">New to MelaMart? <a onclick="toggleAuthMode()">Create an account</a></div>
+      <div class="auth-switch" id="authSwitch">New to Reposo? <a onclick="toggleAuthMode()">Create an account</a></div>
+    </div>
+  </div>
+
+  <!-- Order success -->
+  <div class="success-modal" id="successModal">
+    <div class="modal-drag"></div>
+    <div class="success-body">
+      <div class="success-check">✓</div>
+      <div class="success-title">Order placed</div>
+      <p class="success-sub">We've got it — thanks for shopping with Reposo.</p>
+      <div class="success-order-id" id="successOrderId"></div>
+      <div class="success-delivery" id="successDelivery"></div>
+      <button class="success-btn" onclick="closeAll()">Continue shopping</button>
     </div>
   </div>
 
@@ -314,25 +393,116 @@
 
 <script>
   // ============================================================
-  // CONFIG — point this at your running backend (see backend/server.js)
+  // CONFIG — points at the live Reposo backend
   // ============================================================
-  const API_BASE = "http://localhost:4000/api";
+  const API_BASE = "https://reposo.onrender.com/api";
 
   const CATEGORIES = ["All","Electronics","Fashion","Home","Beauty","Sports","Books"];
+  const SORTS = [
+    { key:'popular', label:'Popular' },
+    { key:'price_low', label:'Price: low to high' },
+    { key:'price_high', label:'Price: high to low' },
+    { key:'rating', label:'Top rated' },
+  ];
+  const HERO_SLIDES = [
+    { eyebrow:"Today only", title:"Up to 60% off small-batch finds", sub:"Curated home, tech and style picks — restocked daily.", cta:"Shop the drop", img:"https://loremflickr.com/900/500/shopping,retail?lock=101" },
+    { eyebrow:"New arrivals", title:"This week's fresh drops", sub:"Handpicked pieces just landed across every category.", cta:"See what's new", img:"https://loremflickr.com/900/500/fashion,store?lock=102" },
+    { eyebrow:"Free delivery", title:"Free shipping over ₹999", sub:"No code needed — it's applied automatically at checkout.", cta:"Start shopping", img:"https://loremflickr.com/900/500/delivery,packages?lock=103" },
+  ];
 
-  let PRODUCTS = [];          // loaded from backend
-  let cart = [];              // loaded from backend when logged in
+  // Maps each seeded product id to a relevant photo keyword (falls back to category for anything added later)
+  const IMAGE_KEYWORDS = {
+    1:"headphones", 2:"fitness-tracker", 3:"tshirt", 4:"running-shoes",
+    5:"coffee-mug", 6:"lipstick", 7:"book", 8:"mechanical-keyboard",
+    9:"denim-jacket", 10:"yoga-mat", 11:"table-lamp", 12:"sunscreen",
+    13:"bluetooth-speaker", 14:"childrens-books", 15:"backpack", 16:"resistance-band"
+  };
+
+  let PRODUCTS = [];
+  let cart = [];
   let activeCategory = "All";
+  let activeSort = "popular";
   let searchTerm = "";
   let currentUser = JSON.parse(localStorage.getItem('mm_user') || 'null');
   let authToken = localStorage.getItem('mm_token') || null;
-  let authMode = 'login';     // 'login' | 'signup'
+  let authMode = 'login';
   let favourites = new Set(JSON.parse(localStorage.getItem('mm_favs') || '[]'));
+  let heroIndex = 0;
+  let heroTimer = null;
 
   function money(n){ return '₹' + Number(n).toLocaleString('en-IN'); }
+  function authHeaders(){ return authToken ? { 'Authorization': 'Bearer ' + authToken } : {}; }
 
-  function authHeaders(){
-    return authToken ? { 'Authorization': 'Bearer ' + authToken } : {};
+  function imageUrl(p, variant=0){
+    const keyword = IMAGE_KEYWORDS[p.id] || (p.category||'product').toLowerCase();
+    const lock = (p.id||1) * 11 + variant;
+    return `https://loremflickr.com/500/500/${encodeURIComponent(keyword)}?lock=${lock}`;
+  }
+
+  function renderStars(rating){
+    const full = Math.round(rating);
+    let html = '';
+    for(let i=0;i<5;i++) html += i < full ? '★' : '<span class="empty">★</span>';
+    return `<span class="stars">${html}</span>`;
+  }
+
+  // Deterministic "stock left" so it doesn't flicker between renders — feels real without a fake DB column
+  function stockLeft(id){
+    const n = (id * 37) % 12; // 0-11
+    return n < 4 ? n + 1 : null; // only show urgency for ~1/3 of products, 1-4 left
+  }
+
+  let recentlyViewed = JSON.parse(localStorage.getItem('mm_recent') || '[]');
+  function trackRecentlyViewed(id){
+    recentlyViewed = [id, ...recentlyViewed.filter(x=>x!==id)].slice(0,10);
+    localStorage.setItem('mm_recent', JSON.stringify(recentlyViewed));
+    renderRecentlyViewed();
+  }
+  function renderRecentlyViewed(){
+    const wrap = document.getElementById('recentWrap');
+    if(!wrap) return;
+    const items = recentlyViewed.map(id=>PRODUCTS.find(p=>p.id===id)).filter(Boolean);
+    if(items.length < 2){ wrap.innerHTML = ''; return; }
+    wrap.innerHTML = `
+      <div class="section-head" style="padding-top:6px"><h2 style="font-size:16px">Recently viewed</h2></div>
+      <div class="recent-scroll">
+        ${items.map(p=>`
+          <div class="recent-card" onclick="openProduct(${p.id})">
+            <div class="recent-img"><img src="${imageUrl(p)}" alt="${p.title}" loading="lazy"></div>
+            <div class="recent-title">${p.title}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // Flies a little copy of the product image from its card/button to the cart icon — the
+  // one deliberate motion moment that shows "this item just left this spot and landed in your cart."
+  function flyToCart(originEl, imgSrc){
+    const cartBtn = document.getElementById('cartIconBtn');
+    if(!originEl || !cartBtn || !imgSrc) return;
+    const start = originEl.getBoundingClientRect();
+    const end = cartBtn.getBoundingClientRect();
+    const dot = document.createElement('img');
+    dot.src = imgSrc;
+    dot.className = 'fly-dot';
+    dot.style.left = start.left + start.width/2 - 20 + 'px';
+    dot.style.top = start.top + start.height/2 - 20 + 'px';
+    dot.style.width = '40px'; dot.style.height = '40px';
+    dot.style.opacity = '0.95';
+    dot.style.transition = 'transform .55s cubic-bezier(.22,.9,.32,1), opacity .55s ease';
+    document.body.appendChild(dot);
+    requestAnimationFrame(()=>{
+      const dx = (end.left + end.width/2) - (start.left + start.width/2);
+      const dy = (end.top + end.height/2) - (start.top + start.height/2);
+      dot.style.transform = `translate(${dx}px, ${dy}px) scale(0.25)`;
+      dot.style.opacity = '0.2';
+    });
+    setTimeout(()=>{
+      dot.remove();
+      cartBtn.querySelector('.badge-count').classList.add('bump');
+      setTimeout(()=> cartBtn.querySelector('.badge-count').classList.remove('bump'), 250);
+    }, 550);
   }
 
   // ---------------- API calls ----------------
@@ -364,10 +534,11 @@
       if(activeCategory!=='All') qs.set('category', activeCategory);
       if(searchTerm) qs.set('search', searchTerm);
       PRODUCTS = await api('/products?' + qs.toString());
-      renderGrid();
+      applySortAndRender();
+      renderRecentlyViewed();
     }catch(e){
       grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 10px;color:var(--danger);font-size:13px;">
-        Couldn't reach the server (${e.message}). Is the backend running on localhost:4000?
+        Couldn't reach the server (${e.message}). The backend may be waking up — try again in a few seconds.
       </div>`;
     }
   }
@@ -378,7 +549,50 @@
     updateCartCount();
   }
 
-  // ---------------- Chips / filters ----------------
+  // ---------------- Hero carousel ----------------
+  function renderHero(){
+    const track = document.getElementById('heroTrack');
+    const dots = document.getElementById('heroDots');
+    track.innerHTML = HERO_SLIDES.map(s=>`
+      <div class="hero" style="background-image:url('${s.img}')">
+        <div class="hero-content">
+          <div class="hero-eyebrow">${s.eyebrow}</div>
+          <h1>${s.title}</h1>
+          <p>${s.sub}</p>
+          <button class="hero-cta" onclick="document.getElementById('gridHead').scrollIntoView({behavior:'smooth'})">${s.cta}</button>
+        </div>
+      </div>
+    `).join('');
+    dots.innerHTML = HERO_SLIDES.map((_,i)=>`<span class="hero-dot ${i===0?'active':''}" onclick="goToSlide(${i})"></span>`).join('');
+    startHeroAuto();
+  }
+  function goToSlide(i){
+    heroIndex = i;
+    document.getElementById('heroTrack').style.transform = `translateX(-${i*100}%)`;
+    [...document.getElementById('heroDots').children].forEach((d,idx)=>d.classList.toggle('active', idx===i));
+    startHeroAuto();
+  }
+  function startHeroAuto(){
+    clearInterval(heroTimer);
+    heroTimer = setInterval(()=> goToSlide((heroIndex+1) % HERO_SLIDES.length), 4500);
+  }
+  // swipe support
+  (function(){
+    let startX = null;
+    const wrap = document.getElementById('heroWrap');
+    wrap.addEventListener('touchstart', e=>{ startX = e.touches[0].clientX; }, {passive:true});
+    wrap.addEventListener('touchend', e=>{
+      if(startX===null) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      if(Math.abs(dx) > 40){
+        if(dx < 0) goToSlide((heroIndex+1) % HERO_SLIDES.length);
+        else goToSlide((heroIndex-1+HERO_SLIDES.length) % HERO_SLIDES.length);
+      }
+      startX = null;
+    });
+  })();
+
+  // ---------------- Chips / sort / filters ----------------
   const chipsEl = document.getElementById('chips');
   CATEGORIES.forEach(cat=>{
     const b = document.createElement('button');
@@ -388,10 +602,22 @@
     b.onclick = ()=>{ activeCategory = cat; renderChips(); loadProducts(); };
     chipsEl.appendChild(b);
   });
+  const sortBarEl = document.getElementById('sortBar');
+  SORTS.forEach(s=>{
+    const b = document.createElement('button');
+    b.className = 'sort-chip' + (s.key==='popular' ? ' active' : '');
+    b.textContent = s.label;
+    b.dataset.sort = s.key;
+    b.onclick = ()=>{ activeSort = s.key; renderSortBar(); applySortAndRender(); };
+    sortBarEl.appendChild(b);
+  });
   function renderChips(){
     [...chipsEl.children].forEach(c=> c.classList.toggle('active', c.dataset.cat === activeCategory));
     document.getElementById('gridTitle').textContent = activeCategory === 'All' ? 'All products' : activeCategory;
     document.getElementById('clearFilter').style.display = (activeCategory === 'All' && !searchTerm) ? 'none' : 'inline';
+  }
+  function renderSortBar(){
+    [...sortBarEl.children].forEach(c=> c.classList.toggle('active', c.dataset.sort === activeSort));
   }
   function clearFilters(){
     activeCategory = 'All'; searchTerm=''; document.getElementById('searchInput').value='';
@@ -405,31 +631,42 @@
     searchDebounce = setTimeout(loadProducts, 300);
   });
 
+  function applySortAndRender(){
+    let list = [...PRODUCTS];
+    if(activeSort==='price_low') list.sort((a,b)=>a.price-b.price);
+    else if(activeSort==='price_high') list.sort((a,b)=>b.price-a.price);
+    else if(activeSort==='rating') list.sort((a,b)=>b.rating-a.rating);
+    else list.sort((a,b)=>b.reviews-a.reviews);
+    renderGrid(list);
+  }
+
   // ---------------- Render grid ----------------
-  function renderGrid(){
+  function renderGrid(list){
     const grid = document.getElementById('productGrid');
-    if(PRODUCTS.length===0){
+    if(list.length===0){
       grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 10px;color:var(--ink-45);font-size:13px;">No products match your search.</div>';
       return;
     }
-    grid.innerHTML = PRODUCTS.map(p=>{
+    grid.innerHTML = list.map(p=>{
       const off = Math.round((1 - p.price/p.mrp)*100);
       const isFav = favourites.has(p.id);
+      const left = stockLeft(p.id);
       return `
         <div class="card">
-          <div class="card-img" onclick="openProduct(${p.id})">
+          <div class="card-img-wrap" onclick="openProduct(${p.id})">
             ${p.badge ? `<span class="badge">${p.badge}</span>` : ''}
             <button class="fav-btn ${isFav?'active':''}" onclick="event.stopPropagation(); toggleFav(${p.id}, this)">${isFav?'♥':'♡'}</button>
-            ${p.emoji}
+            <img src="${imageUrl(p)}" alt="${p.title}" loading="lazy" onload="this.classList.add('loaded')">
           </div>
           <div class="card-body">
             <div class="card-title" onclick="openProduct(${p.id})">${p.title}</div>
-            <div class="card-rating">★ <b>${p.rating}</b> (${Number(p.reviews).toLocaleString('en-IN')})</div>
+            <div class="card-rating">${renderStars(p.rating)} <span>${p.rating} (${Number(p.reviews).toLocaleString('en-IN')})</span></div>
             <div class="price-row">
               <span class="price">${money(p.price)}</span>
               <span class="mrp">${money(p.mrp)}</span>
               <span class="off">${off}% off</span>
             </div>
+            ${left ? `<div class="stock-tag">Only ${left} left</div>` : ''}
             <button class="add-btn" onclick="addToCart(${p.id}, this)">Add to cart</button>
           </div>
         </div>
@@ -446,7 +683,12 @@
   // ---------------- Cart ----------------
   async function addToCart(id, btn){
     if(!authToken){ showToast('Log in to add items to your cart'); openAuth('login'); return; }
-    if(btn){ btn.disabled = true; btn.textContent = 'Adding…'; }
+    if(btn){
+      btn.disabled = true; btn.textContent = 'Adding…';
+      const card = btn.closest('.card') || btn.closest('.modal') || btn.closest('.related-card');
+      const img = card ? card.querySelector('img') : null;
+      if(img) flyToCart(img, img.src);
+    }
     try{
       await api('/cart', { method:'POST', body:{ productId:id, qty:1 } });
       await loadCart();
@@ -505,7 +747,7 @@
       subtotal += item.price * item.qty;
       return `
         <div class="cart-item">
-          <div class="cart-item-img">${item.emoji}</div>
+          <div class="cart-item-img"><img src="${imageUrl(item)}" alt="${item.title}"></div>
           <div class="cart-item-info">
             <div class="cart-item-title">${item.title}</div>
             <div class="qty-row">
@@ -534,7 +776,13 @@
       const order = await api('/orders', { method:'POST' });
       await loadCart();
       renderCartDrawer();
-      showToast(`Order #${order.orderId} placed — ${money(order.total)}`);
+      closeAll();
+      const d = new Date(); d.setDate(d.getDate()+3);
+      const dateStr = d.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long' });
+      document.getElementById('successOrderId').textContent = `Order #${order.orderId} · ${money(order.total)}`;
+      document.getElementById('successDelivery').textContent = `Estimated delivery: ${dateStr}`;
+      showOverlay();
+      document.getElementById('successModal').classList.add('show');
     }catch(e){ showToast(e.message); }
   }
 
@@ -546,24 +794,59 @@
     document.getElementById('cartDrawer').classList.remove('show');
     document.getElementById('productModal').classList.remove('show');
     document.getElementById('authModal').classList.remove('show');
+    document.getElementById('successModal').classList.remove('show');
   }
 
   function openProduct(id){
     const p = PRODUCTS.find(x=>x.id===id);
     if(!p) return;
-    document.getElementById('modalImg').textContent = p.emoji;
+    trackRecentlyViewed(id);
+    document.getElementById('modalGallery').innerHTML = `<img src="${imageUrl(p)}" alt="${p.title}" onload="this.classList.add('loaded')">`;
+    document.getElementById('modalThumbs').innerHTML = [0,1,2,3].map(v=>`
+      <div class="modal-thumb ${v===0?'active':''}" onclick="swapModalImage(${p.id},${v},this)">
+        <img src="${imageUrl(p,v)}" alt="">
+      </div>
+    `).join('');
+    document.getElementById('modalCat').textContent = p.category;
     document.getElementById('modalTitle').textContent = p.title;
-    document.getElementById('modalRating').innerHTML = `★ <b>${p.rating}</b> (${Number(p.reviews).toLocaleString('en-IN')} reviews)`;
+    document.getElementById('modalRating').innerHTML = `${renderStars(p.rating)} <span>${p.rating} (${Number(p.reviews).toLocaleString('en-IN')} reviews)</span>`;
     document.getElementById('modalPrice').textContent = money(p.price);
     document.getElementById('modalMrp').textContent = money(p.mrp);
     document.getElementById('modalOff').textContent = Math.round((1-p.price/p.mrp)*100) + '% off';
+    const left = stockLeft(p.id);
+    document.getElementById('modalStock').textContent = left ? `Only ${left} left in stock` : '';
+    document.getElementById('modalStock').style.display = left ? 'flex' : 'none';
     document.getElementById('modalDesc').textContent = p.description;
     const favBtn = document.getElementById('modalFavBtn');
     favBtn.textContent = favourites.has(p.id) ? '♥' : '♡';
     favBtn.onclick = ()=> toggleFav(p.id, favBtn);
-    document.getElementById('modalAddBtn').onclick = (e)=> addToCart(p.id, null);
+    document.getElementById('modalAddBtn').onclick = ()=> addToCart(p.id, null);
+
+    const related = PRODUCTS.filter(x=>x.category===p.category && x.id!==p.id).slice(0,6);
+    const relatedWrap = document.getElementById('relatedWrap');
+    if(related.length){
+      relatedWrap.innerHTML = `
+        <div class="related-head">You might also like</div>
+        <div class="related-scroll">
+          ${related.map(r=>`
+            <div class="related-card" onclick="openProduct(${r.id})">
+              <div class="related-img"><img src="${imageUrl(r)}" alt="${r.title}"></div>
+              <div class="related-title">${r.title}</div>
+              <div class="related-price">${money(r.price)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } else { relatedWrap.innerHTML = ''; }
+
     showOverlay();
     document.getElementById('productModal').classList.add('show');
+  }
+  function swapModalImage(id, variant, thumbEl){
+    const p = PRODUCTS.find(x=>x.id===id);
+    document.getElementById('modalGallery').innerHTML = `<img src="${imageUrl(p,variant)}" alt="${p.title}" onload="this.classList.add('loaded')">`;
+    [...thumbEl.parentElement.children].forEach(c=>c.classList.remove('active'));
+    thumbEl.classList.add('active');
   }
 
   // ---------------- Auth ----------------
@@ -594,7 +877,7 @@
     document.getElementById('authSubmitBtn').textContent = isSignup ? 'Create account' : 'Log in';
     document.getElementById('authSwitch').innerHTML = isSignup
       ? 'Already have an account? <a onclick="toggleAuthMode()">Log in</a>'
-      : 'New to MelaMart? <a onclick="toggleAuthMode()">Create an account</a>';
+      : 'New to Reposo? <a onclick="toggleAuthMode()">Create an account</a>';
     document.getElementById('authError').style.display = 'none';
   }
   document.getElementById('authForm').addEventListener('submit', async (e)=>{
@@ -634,7 +917,9 @@
   }
 
   // ---------------- Init ----------------
+  renderHero();
   renderChips();
+  renderSortBar();
   loadProducts();
   loadCart();
 </script>

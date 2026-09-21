@@ -1,7 +1,7 @@
 {
-  "name": "melamart-backend",
-  "version": "1.0.0",
-  "description": "MelaMart REST API — products, auth, cart, orders",
+  "name": "reposo-backend",
+  "version": "2.0.0",
+  "description": "Reposo REST API — products, auth, cart, orders (PostgreSQL)",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
@@ -9,7 +9,7 @@
     "dev": "node server.js"
   },
   "dependencies": {
-    "better-sqlite3": "^11.3.0",
+    "pg": "^8.12.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "express": "^4.19.2",

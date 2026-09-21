@@ -1,69 +1,71 @@
-# MelaMart — real architecture
+# Phase 1: Reposo on real PostgreSQL (100% free)
 
-## How it's structured now
+This replaces the old SQLite file (`melamart.db` / `reposo.db`) with a real
+Postgres database — needed before a marketplace can have multiple sellers
+writing at the same time. Hosting stays free the whole way through.
 
+## What changed
+- `db.js` — now connects to Postgres with the `pg` library instead of `better-sqlite3`
+- `server.js` — every database call is now `async/await` against that Postgres pool
+- `package.json` — swapped `better-sqlite3` for `pg`
+- A `role` column was added to `users` ('buyer' or 'seller') — not used yet, but it's there
+  ready for Phase 2 so we won't need another migration soon
+- A `seller_id` column was added to `products` — same reason
+
+`index.html` is untouched — it still talks to `reposo.onrender.com`.
+
+## Step 1 — Create a free Postgres database on Neon
+
+1. Go to **[neon.tech](https://neon.tech)** and sign up (free, no card required)
+2. Click **"Create a project"** — name it `reposo`
+3. Once created, Neon shows a **connection string** that looks like:
+   ```
+   postgresql://username:password@ep-xxxx.neon.tech/reposo?sslmode=require
+   ```
+4. **Copy that whole string** — you'll need it in Step 3
+
+## Step 2 — Push these updated files to GitHub
+
+In your `reposo` GitHub repo, upload these 3 files, overwriting the old ones:
+- `db.js`
+- `server.js`
+- `package.json`
+
+(`index.html` and `README.md` don't need to change.)
+
+## Step 3 — Tell Render about the database
+
+1. Open your Render dashboard → your `reposo` web service
+2. Go to **Environment** (left sidebar)
+3. Click **"Add Environment Variable"**
+4. Key: `DATABASE_URL`
+   Value: *paste the Neon connection string from Step 1*
+5. Save — Render will automatically redeploy
+
+## Step 4 — Watch the deploy logs
+
+In Render's **Logs** tab, you should see:
 ```
-melamart/
-├── backend/            ← Node.js + Express REST API
-│   ├── server.js       ← all API routes (auth, products, cart, orders)
-│   ├── db.js           ← SQLite database + product seed data
-│   └── package.json    ← dependencies list
-└── frontend/
-    └── index.html      ← the site itself (calls the backend over fetch)
+Seeded 16 products into Postgres
+Reposo API running at http://localhost:4000
 ```
 
-This is a standard **3-tier architecture**:
+If instead you see a connection error, double check the `DATABASE_URL` was pasted
+correctly (no extra spaces, no missing `?sslmode=require` at the end).
 
-1. **Frontend** (browser) — `index.html`. Renders the UI, calls the backend with `fetch()`.
-2. **Backend** (server) — `server.js`. Express app exposing a REST API. Checks passwords, issues login tokens (JWT), enforces "you can only see your own cart."
-3. **Database** — `melamart.db`, a real SQLite file created automatically the first time you run the server. Stores users, products, cart items, and orders permanently — data survives restarts, unlike the old version where everything reset on page refresh.
+## Step 5 — Test it
 
-## API endpoints
+Visit `https://reposo.onrender.com/api/products` in a browser — same JSON list
+of products as before, but now it's coming from real Postgres, and unlike
+SQLite it will happily handle many people reading and writing to it at once.
 
-| Method | Path                  | Auth? | Does |
-|--------|-----------------------|-------|------|
-| POST   | /api/auth/signup      | no    | create account, returns token |
-| POST   | /api/auth/login       | no    | log in, returns token |
-| GET    | /api/products         | no    | list products (`?category=`, `?search=`) |
-| GET    | /api/products/:id     | no    | one product |
-| GET    | /api/cart             | yes   | your cart |
-| POST   | /api/cart             | yes   | add item `{productId, qty}` |
-| PUT    | /api/cart/:productId  | yes   | change quantity `{qty}` |
-| DELETE | /api/cart/:productId  | yes   | remove item |
-| POST   | /api/orders           | yes   | checkout (turns cart into an order) |
-| GET    | /api/orders           | yes   | your order history |
+---
 
-Passwords are hashed with bcrypt (never stored in plain text). Login returns a JWT token the frontend stores in `localStorage` and sends back on every request.
+## What Phase 1 unlocks
+Nothing changes for buyers yet — the app looks and works the same. But the
+foundation is now solid enough for **Phase 2: seller accounts**, where the
+`role` and `seller_id` columns we already added will start getting used —
+sellers will sign up, get their own dashboard, and add their own products
+instead of the 16 seeded demo ones.
 
-## Running it
-
-You'll need **Node.js** installed (free, from nodejs.org) — this one part does need a terminal, since a backend is a running program, not a static page.
-
-**1. Start the backend:**
-```
-cd melamart/backend
-npm install
-npm start
-```
-This prints `MelaMart API running at http://localhost:4000` and creates `melamart.db` automatically with 16 seeded products.
-
-**2. Open the frontend:**
-Just double-click `frontend/index.html` — no terminal needed for this part. It's already configured to call `http://localhost:4000/api`.
-
-**3. Try it:** browse products, tap "Add to cart" → it'll ask you to log in first (tap "Create an account"), then your cart and orders persist for real, backed by the database.
-
-## Going live (no terminal needed for this part)
-
-Once you're ready to put this on the internet instead of your own laptop:
-
-- **Backend:** deploy the `backend/` folder to [Render](https://render.com) or [Railway](https://railway.app) — both let you connect a GitHub repo and deploy by clicking a button in their dashboard, no command line required. They'll give you a live URL like `https://melamart-api.onrender.com`.
-- **Frontend:** change `API_BASE` at the top of `index.html`'s `<script>` to that live URL, then drag-drop the `frontend` folder onto [Netlify Drop](https://app.netlify.com/drop) for a live site in seconds.
-
-## What's still simplified (good next steps)
-
-- Checkout is a mock — no real payment gateway (Razorpay/Stripe) wired in yet.
-- No product images — emoji placeholders stand in for photos.
-- No admin panel to add/edit products (currently edited via `db.js` seed data).
-- No order tracking / delivery status updates.
-
-Tell me which of these you want next and I'll build it in.
+Say the word when you want Phase 2.

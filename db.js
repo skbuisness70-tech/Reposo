@@ -17,20 +17,21 @@ async function initDb() {
       name TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
-      role TEXT NOT NULL DEFAULT 'buyer',   -- 'buyer' or 'seller' — used from Phase 2 onward
+      role TEXT NOT NULL DEFAULT 'buyer',        -- 'buyer' | 'seller' | 'admin'
+      seller_status TEXT NOT NULL DEFAULT 'none', -- 'none' | 'pending' | 'approved' | 'rejected'
       created_at TIMESTAMP DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS products (
       id SERIAL PRIMARY KEY,
-      seller_id INTEGER REFERENCES users(id),  -- NULL for now, filled in once sellers exist (Phase 2)
+      seller_id INTEGER REFERENCES users(id),
       title TEXT NOT NULL,
       category TEXT NOT NULL,
       price INTEGER NOT NULL,
       mrp INTEGER NOT NULL,
       emoji TEXT,
-      rating REAL,
-      reviews INTEGER,
+      rating REAL DEFAULT 0,
+      reviews INTEGER DEFAULT 0,
       badge TEXT,
       description TEXT
     );
@@ -59,6 +60,10 @@ async function initDb() {
       price_at_purchase INTEGER NOT NULL
     );
   `);
+
+  // ---------- Migration safety net: add columns if this DB was created before Phase 2 ----------
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS seller_status TEXT NOT NULL DEFAULT 'none';`);
+  await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS seller_id INTEGER REFERENCES users(id);`);
 
   // ---------- Seed products (only if table is empty) ----------
   const { rows } = await pool.query('SELECT COUNT(*) AS c FROM products');

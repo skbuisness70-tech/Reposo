@@ -16,7 +16,18 @@ app.use(express.json());
 
 // ---------------- Helpers ----------------
 function signToken(user) {
-  return jwt.sign({ id: user.id, email: user.email, name: user.name, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign(
+    { id: user.id, email: user.email, name: user.name, role: user.role, seller_status: user.seller_status },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+}
+
+function requireRole(...roles) {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) return res.status(403).json({ error: 'Not allowed for your account type' });
+    next();
+  };
 }
 
 function auth(req, res, next) {
@@ -41,17 +52,22 @@ function wrap(fn) {
 
 // ================== AUTH ==================
 app.post('/api/auth/signup', wrap(async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, role } = req.body;
   if (!name || !email || !password) return res.status(400).json({ error: 'Name, email and password are required' });
   if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
 
   const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
   if (existing.rows.length) return res.status(409).json({ error: 'An account with this email already exists' });
 
+  // The one admin account is decided by an env var — nobody can self-promote to admin via signup.
+  const isAdmin = process.env.ADMIN_EMAIL && email.toLowerCase() === process.env.ADMIN_EMAIL.toLowerCase();
+  const finalRole = isAdmin ? 'admin' : (role === 'seller' ? 'seller' : 'buyer');
+  const sellerStatus = finalRole === 'seller' ? 'pending' : 'none';
+
   const hash = bcrypt.hashSync(password, 10);
   const inserted = await pool.query(
-    'INSERT INTO users (name, email, password_hash) VALUES ($1,$2,$3) RETURNING id, name, email, role',
-    [name, email.toLowerCase(), hash]
+    'INSERT INTO users (name, email, password_hash, role, seller_status) VALUES ($1,$2,$3,$4,$5) RETURNING id, name, email, role, seller_status',
+    [name, email.toLowerCase(), hash, finalRole, sellerStatus]
   );
   const user = inserted.rows[0];
   res.status(201).json({ token: signToken(user), user });
@@ -64,26 +80,32 @@ app.post('/api/auth/login', wrap(async (req, res) => {
   if (!row || !bcrypt.compareSync(password || '', row.password_hash)) {
     return res.status(401).json({ error: 'Incorrect email or password' });
   }
-  const user = { id: row.id, name: row.name, email: row.email, role: row.role };
+  const user = { id: row.id, name: row.name, email: row.email, role: row.role, seller_status: row.seller_status };
   res.json({ token: signToken(user), user });
 }));
 
-app.get('/api/auth/me', auth, (req, res) => {
-  res.json({ user: req.user });
-});
+app.get('/api/auth/me', auth, wrap(async (req, res) => {
+  const result = await pool.query('SELECT id, name, email, role, seller_status FROM users WHERE id = $1', [req.user.id]);
+  res.json({ user: result.rows[0] });
+}));
 
-// ================== PRODUCTS ==================
+// ================== PRODUCTS (public — buyer-facing) ==================
 app.get('/api/products', wrap(async (req, res) => {
   const { category, search } = req.query;
-  let sql = 'SELECT * FROM products WHERE 1=1';
+  // Only show: platform demo products (no seller) OR products from an approved seller.
+  let sql = `
+    SELECT p.* FROM products p
+    LEFT JOIN users u ON u.id = p.seller_id
+    WHERE (p.seller_id IS NULL OR u.seller_status = 'approved')
+  `;
   const params = [];
   if (category && category !== 'All') {
     params.push(category);
-    sql += ` AND category = $${params.length}`;
+    sql += ` AND p.category = $${params.length}`;
   }
   if (search) {
     params.push(`%${search.toLowerCase()}%`);
-    sql += ` AND (LOWER(title) LIKE $${params.length} OR LOWER(category) LIKE $${params.length})`;
+    sql += ` AND (LOWER(p.title) LIKE $${params.length} OR LOWER(p.category) LIKE $${params.length})`;
   }
   const result = await pool.query(sql, params);
   res.json(result.rows);
@@ -93,6 +115,67 @@ app.get('/api/products/:id', wrap(async (req, res) => {
   const result = await pool.query('SELECT * FROM products WHERE id = $1', [req.params.id]);
   if (!result.rows[0]) return res.status(404).json({ error: 'Product not found' });
   res.json(result.rows[0]);
+}));
+
+// ================== SELLER (requires an approved-or-pending seller account) ==================
+app.get('/api/seller/status', auth, requireRole('seller', 'admin'), wrap(async (req, res) => {
+  const result = await pool.query('SELECT seller_status FROM users WHERE id = $1', [req.user.id]);
+  res.json({ seller_status: result.rows[0]?.seller_status || 'none' });
+}));
+
+app.get('/api/seller/products', auth, requireRole('seller', 'admin'), wrap(async (req, res) => {
+  const result = await pool.query('SELECT * FROM products WHERE seller_id = $1 ORDER BY id DESC', [req.user.id]);
+  res.json(result.rows);
+}));
+
+app.post('/api/seller/products', auth, requireRole('seller', 'admin'), wrap(async (req, res) => {
+  const { title, category, price, mrp, emoji, description } = req.body;
+  if (!title || !category || !price || !mrp) {
+    return res.status(400).json({ error: 'Title, category, price and MRP are required' });
+  }
+  const result = await pool.query(
+    `INSERT INTO products (seller_id, title, category, price, mrp, emoji, rating, reviews, badge, description)
+     VALUES ($1,$2,$3,$4,$5,$6,0,0,NULL,$7) RETURNING *`,
+    [req.user.id, title, category, price, mrp, emoji || '🛍️', description || '']
+  );
+  res.status(201).json(result.rows[0]);
+}));
+
+app.put('/api/seller/products/:id', auth, requireRole('seller', 'admin'), wrap(async (req, res) => {
+  const owned = await pool.query('SELECT id FROM products WHERE id = $1 AND seller_id = $2', [req.params.id, req.user.id]);
+  if (!owned.rows[0]) return res.status(404).json({ error: 'Product not found in your listings' });
+
+  const { title, category, price, mrp, emoji, description } = req.body;
+  await pool.query(
+    `UPDATE products SET title=$1, category=$2, price=$3, mrp=$4, emoji=$5, description=$6 WHERE id=$7`,
+    [title, category, price, mrp, emoji, description, req.params.id]
+  );
+  res.json({ ok: true });
+}));
+
+app.delete('/api/seller/products/:id', auth, requireRole('seller', 'admin'), wrap(async (req, res) => {
+  await pool.query('DELETE FROM products WHERE id = $1 AND seller_id = $2', [req.params.id, req.user.id]);
+  res.json({ ok: true });
+}));
+
+// ================== ADMIN (approve/reject sellers) ==================
+app.get('/api/admin/sellers', auth, requireRole('admin'), wrap(async (req, res) => {
+  const { status = 'pending' } = req.query;
+  const result = await pool.query(
+    'SELECT id, name, email, seller_status, created_at FROM users WHERE role = $1 AND seller_status = $2 ORDER BY created_at ASC',
+    ['seller', status]
+  );
+  res.json(result.rows);
+}));
+
+app.post('/api/admin/sellers/:id/approve', auth, requireRole('admin'), wrap(async (req, res) => {
+  await pool.query(`UPDATE users SET seller_status = 'approved' WHERE id = $1 AND role = 'seller'`, [req.params.id]);
+  res.json({ ok: true });
+}));
+
+app.post('/api/admin/sellers/:id/reject', auth, requireRole('admin'), wrap(async (req, res) => {
+  await pool.query(`UPDATE users SET seller_status = 'rejected' WHERE id = $1 AND role = 'seller'`, [req.params.id]);
+  res.json({ ok: true });
 }));
 
 // ================== CART (requires login) ==================

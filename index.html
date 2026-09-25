@@ -6,6 +6,7 @@
 <title>Reposo — everyday shopping</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <style>
   :root{
     --paper:#FDFCFA;
@@ -129,7 +130,8 @@
   .section-head a{ font-size:12px; color:var(--teal); text-decoration:none; font-weight:600; cursor:pointer; }
 
   /* ---------- Sort bar ---------- */
-  .sort-bar{ display:flex; align-items:center; gap:8px; padding:0 14px 12px; overflow-x:auto; scrollbar-width:none; }
+  .sort-bar-row{ display:flex; align-items:center; gap:8px; padding:0 14px 12px; }
+  .sort-bar{ display:flex; align-items:center; gap:8px; overflow-x:auto; scrollbar-width:none; flex:1; padding:0; }
   .sort-bar::-webkit-scrollbar{ display:none; }
   .sort-label{ font-size:11px; color:var(--ink-45); flex-shrink:0; }
   .sort-chip{
@@ -138,6 +140,27 @@
     white-space:nowrap; transition:all .15s var(--ease);
   }
   .sort-chip.active{ background:rgba(14,110,110,0.1); border-color:var(--teal); color:var(--teal); }
+  .filter-btn{ flex-shrink:0; padding:6px 12px; border-radius:999px; border:1px solid var(--border); background:var(--card); font-size:12px; font-weight:600; color:var(--ink-70); cursor:pointer; position:relative; }
+  .filter-btn.has-filters{ border-color:var(--teal); color:var(--teal); background:rgba(14,110,110,0.08); }
+  .filter-sheet-body{ padding:6px 20px 24px; }
+  .filter-row{ margin-bottom:16px; }
+  .filter-row label{ font-size:12px; font-weight:600; color:var(--ink-70); display:block; margin-bottom:8px; }
+  .price-inputs{ display:flex; align-items:center; gap:8px; }
+  .price-inputs input{ flex:1; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:#F4F1E9; font-size:13px; }
+  .rating-opts, .seller-opts{ display:flex; gap:8px; flex-wrap:wrap; }
+  .filter-chip{ padding:7px 14px; border-radius:999px; border:1px solid var(--border); background:var(--card); font-size:12.5px; font-weight:500; color:var(--ink-70); cursor:pointer; }
+  .filter-chip.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .filter-apply-row{ display:flex; gap:10px; margin-top:6px; }
+  .filter-clear-btn{ flex:1; padding:12px; border-radius:999px; border:1.5px solid var(--border); background:var(--card); color:var(--ink-70); font-weight:600; font-size:13.5px; cursor:pointer; }
+  .filter-apply-btn{ flex:2; padding:12px; border-radius:999px; border:none; background:var(--ink); color:var(--paper); font-weight:600; font-size:13.5px; cursor:pointer; }
+  .reviews-head{ font-size:15px; font-weight:600; margin:22px 0 12px; }
+  .review-row{ padding:12px 0; border-bottom:1px solid var(--border); }
+  .review-row-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .review-name{ font-size:12.5px; font-weight:600; }
+  .review-date{ font-size:11px; color:var(--ink-45); }
+  .review-stars{ color:var(--saffron-dark); font-size:12px; margin-bottom:4px; }
+  .review-comment{ font-size:12.5px; color:var(--ink-70); line-height:1.5; }
+  .sold-by{ font-size:11.5px; color:var(--ink-45); margin-top:2px; }
 
   /* ---------- Product grid ---------- */
   .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 14px 8px; }
@@ -270,6 +293,16 @@
   .status-banner.pending{ background:#FFF3E0; color:#8A5A00; }
   .status-banner.approved{ background:rgba(14,110,110,0.1); color:var(--teal); }
   .status-banner.rejected{ background:#FBEAE5; color:var(--danger); }
+  .earnings-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:18px; }
+  .earnings-card{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px 10px; text-align:center; }
+  .earnings-label{ font-size:10.5px; color:var(--ink-45); margin-bottom:4px; }
+  .earnings-value{ font-size:15px; font-weight:700; color:var(--ink); }
+  .payout-row{ display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid var(--border); }
+  .payout-row-info{ flex:1; }
+  .payout-row-name{ font-size:13px; font-weight:600; }
+  .payout-row-meta{ font-size:11.5px; color:var(--ink-45); }
+  .payout-amount{ font-size:14px; font-weight:700; color:var(--teal); }
+  .mark-paid-btn{ padding:7px 12px; border-radius:8px; border:none; background:var(--ink); color:var(--paper); font-size:12px; font-weight:600; cursor:pointer; margin-left:8px; }
   .seller-form{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:18px; }
   .seller-form-title{ font-size:14px; font-weight:600; margin-bottom:10px; }
   .form-row{ display:flex; gap:8px; }
@@ -280,6 +313,7 @@
   .seller-product-info{ flex:1; min-width:0; }
   .seller-product-title{ font-size:13px; font-weight:500; }
   .seller-product-meta{ font-size:11.5px; color:var(--ink-45); }
+  .order-status-select{ padding:6px 8px; border-radius:8px; border:1px solid var(--border); background:var(--card); font-size:11.5px; font-weight:600; color:var(--ink); }
   .row-actions{ display:flex; gap:6px; }
   .row-actions button{ width:30px; height:30px; border-radius:8px; border:1px solid var(--border); background:var(--card); cursor:pointer; font-size:13px; }
   .admin-row{ display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid var(--border); }
@@ -336,7 +370,10 @@
     <h2 id="gridTitle">All products</h2>
     <a id="clearFilter" style="display:none" onclick="clearFilters()">Clear filter</a>
   </div>
-  <div class="sort-bar" id="sortBar"></div>
+  <div class="sort-bar-row">
+    <div class="sort-bar" id="sortBar"></div>
+    <button class="filter-btn" id="filterBtn" onclick="openFilterSheet()">⚙️ Filters</button>
+  </div>
   <div class="grid" id="productGrid"></div>
 
   <div class="bottom-nav">
@@ -376,6 +413,7 @@
         <button class="modal-add" id="modalAddBtn">Add to cart</button>
       </div>
       <div id="relatedWrap"></div>
+      <div id="reviewsWrap"></div>
     </div>
   </div>
 
@@ -418,10 +456,46 @@
     <div class="drawer-body" id="sellerBody" style="padding:14px 16px;"></div>
   </div>
 
+  <!-- Filter sheet -->
+  <div class="auth-modal" id="filterSheet">
+    <div class="modal-drag"></div>
+    <div class="filter-sheet-body">
+      <div class="auth-title" style="margin-bottom:16px">Filters</div>
+      <div class="filter-row">
+        <label>Price range (₹)</label>
+        <div class="price-inputs">
+          <input type="number" id="filterMinPrice" placeholder="Min">
+          <span style="color:var(--ink-45)">–</span>
+          <input type="number" id="filterMaxPrice" placeholder="Max">
+        </div>
+      </div>
+      <div class="filter-row">
+        <label>Minimum rating</label>
+        <div class="rating-opts" id="ratingOpts"></div>
+      </div>
+      <div class="filter-row">
+        <label>Sold by</label>
+        <div class="seller-opts" id="sellerOpts">
+          <div style="font-size:12px;color:var(--ink-45);">Loading sellers…</div>
+        </div>
+      </div>
+      <div class="filter-apply-row">
+        <button class="filter-clear-btn" onclick="clearAdvancedFilters()">Clear all</button>
+        <button class="filter-apply-btn" onclick="applyAdvancedFilters()">Apply</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Admin dashboard -->
   <div class="drawer" id="adminDrawer" style="width:100%; max-width:none;">
     <div class="drawer-head"><h3>Seller approvals</h3><button class="close-btn" onclick="closeAll()">✕</button></div>
     <div class="drawer-body" id="adminBody" style="padding:14px 16px;"></div>
+  </div>
+
+  <!-- Buyer order history -->
+  <div class="drawer" id="ordersDrawer" style="width:100%; max-width:none;">
+    <div class="drawer-head"><h3>My orders</h3><button class="close-btn" onclick="closeAll()">✕</button></div>
+    <div class="drawer-body" id="ordersBody" style="padding:14px 16px;"></div>
   </div>
 
   <!-- Order success -->
@@ -444,6 +518,12 @@
   // CONFIG — points at the live Reposo backend
   // ============================================================
   const API_BASE = "https://reposo.onrender.com/api";
+
+  // Free image hosting for seller photo uploads — sign up at cloudinary.com (free tier),
+  // create an UNSIGNED upload preset (Settings → Upload → Add upload preset → Signing mode: Unsigned),
+  // then fill these two in. No secret key needed here — unsigned presets are safe to expose client-side.
+  const CLOUDINARY_CLOUD_NAME = "your-cloud-name";
+  const CLOUDINARY_UPLOAD_PRESET = "your-unsigned-preset";
 
   const CATEGORIES = ["All","Electronics","Fashion","Home","Beauty","Sports","Books"];
   const SORTS = [
@@ -482,6 +562,7 @@
   function authHeaders(){ return authToken ? { 'Authorization': 'Bearer ' + authToken } : {}; }
 
   function imageUrl(p, variant=0){
+    if(p.image_url || p.imageUrl){ return p.image_url || p.imageUrl; } // real seller-uploaded photo takes priority
     const keyword = IMAGE_KEYWORDS[p.id] || (p.category||'product').toLowerCase();
     const lock = (p.id||1) * 11 + variant;
     return `https://loremflickr.com/500/500/${encodeURIComponent(keyword)}?lock=${lock}`;
@@ -581,6 +662,10 @@
       const qs = new URLSearchParams();
       if(activeCategory!=='All') qs.set('category', activeCategory);
       if(searchTerm) qs.set('search', searchTerm);
+      if(advFilters.minPrice) qs.set('minPrice', advFilters.minPrice);
+      if(advFilters.maxPrice) qs.set('maxPrice', advFilters.maxPrice);
+      if(advFilters.minRating) qs.set('minRating', advFilters.minRating);
+      if(advFilters.sellerId) qs.set('sellerId', advFilters.sellerId);
       PRODUCTS = await api('/products?' + qs.toString());
       applySortAndRender();
       renderRecentlyViewed();
@@ -589,6 +674,56 @@
         Couldn't reach the server (${e.message}). The backend may be waking up — try again in a few seconds.
       </div>`;
     }
+  }
+
+  // ---------------- Advanced filters ----------------
+  let advFilters = { minPrice:'', maxPrice:'', minRating:'', sellerId:'' };
+  let sellersCache = null;
+  async function openFilterSheet(){
+    document.getElementById('filterMinPrice').value = advFilters.minPrice;
+    document.getElementById('filterMaxPrice').value = advFilters.maxPrice;
+    renderRatingOpts();
+    if(!sellersCache){
+      try{ sellersCache = await api('/sellers'); }catch{ sellersCache = []; }
+    }
+    renderSellerOpts();
+    showOverlay();
+    document.getElementById('filterSheet').classList.add('show');
+  }
+  function renderRatingOpts(){
+    const opts = [4,3,2];
+    document.getElementById('ratingOpts').innerHTML = opts.map(r=>`
+      <button type="button" class="filter-chip ${advFilters.minRating==r?'active':''}" onclick="pickMinRating(${r}, this)">${r}★ &amp; up</button>
+    `).join('');
+  }
+  function pickMinRating(r, btn){
+    advFilters.minRating = advFilters.minRating == r ? '' : r;
+    renderRatingOpts();
+  }
+  function renderSellerOpts(){
+    const wrap = document.getElementById('sellerOpts');
+    if(!sellersCache.length){ wrap.innerHTML = `<div style="font-size:12px;color:var(--ink-45);">No marketplace sellers yet — showing Reposo's own catalogue.</div>`; return; }
+    wrap.innerHTML = sellersCache.map(s=>`
+      <button type="button" class="filter-chip ${advFilters.sellerId==s.id?'active':''}" onclick="pickSeller(${s.id}, this)">${s.name}</button>
+    `).join('');
+  }
+  function pickSeller(id, btn){
+    advFilters.sellerId = advFilters.sellerId == id ? '' : id;
+    renderSellerOpts();
+  }
+  function applyAdvancedFilters(){
+    advFilters.minPrice = document.getElementById('filterMinPrice').value;
+    advFilters.maxPrice = document.getElementById('filterMaxPrice').value;
+    const active = advFilters.minPrice || advFilters.maxPrice || advFilters.minRating || advFilters.sellerId;
+    document.getElementById('filterBtn').classList.toggle('has-filters', !!active);
+    closeAll();
+    loadProducts();
+  }
+  function clearAdvancedFilters(){
+    advFilters = { minPrice:'', maxPrice:'', minRating:'', sellerId:'' };
+    document.getElementById('filterBtn').classList.remove('has-filters');
+    closeAll();
+    loadProducts();
   }
 
   async function loadCart(){
@@ -821,16 +956,42 @@
 
   async function checkout(){
     try{
-      const order = await api('/orders', { method:'POST' });
-      await loadCart();
-      renderCartDrawer();
-      closeAll();
-      const d = new Date(); d.setDate(d.getDate()+3);
-      const dateStr = d.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long' });
-      document.getElementById('successOrderId').textContent = `Order #${order.orderId} · ${money(order.total)}`;
-      document.getElementById('successDelivery').textContent = `Estimated delivery: ${dateStr}`;
-      showOverlay();
-      document.getElementById('successModal').classList.add('show');
+      // Step 1: ask our server to open a Razorpay order for the current cart total
+      const init = await api('/checkout/init', { method:'POST' });
+
+      // Step 2: open Razorpay's own payment popup (test mode — use card 4111 1111 1111 1111,
+      // any future expiry, any CVV, to simulate a successful payment without moving real money)
+      const rzp = new Razorpay({
+        key: init.keyId,
+        amount: init.amount,
+        currency: init.currency,
+        name: 'Reposo',
+        description: 'Order payment',
+        order_id: init.razorpayOrderId,
+        theme: { color: '#14213D' },
+        handler: async function(response){
+          // Step 3: server re-verifies the payment signature before creating the real order
+          try{
+            const order = await api('/checkout/verify', { method:'POST', body:{
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            }});
+            await loadCart();
+            renderCartDrawer();
+            closeAll();
+            const d = new Date(); d.setDate(d.getDate()+3);
+            const dateStr = d.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long' });
+            document.getElementById('successOrderId').textContent = `Order #${order.orderId} · ${money(order.total)}`;
+            document.getElementById('successDelivery').textContent = `Estimated delivery: ${dateStr}`;
+            showOverlay();
+            document.getElementById('successModal').classList.add('show');
+          }catch(e){ showToast(e.message); }
+        },
+        modal: { ondismiss: function(){ showToast('Payment cancelled'); } }
+      });
+      rzp.on('payment.failed', function(){ showToast('Payment failed — please try again'); });
+      rzp.open();
     }catch(e){ showToast(e.message); }
   }
 
@@ -839,10 +1000,7 @@
   function showOverlay(){ document.getElementById('overlay').classList.add('show'); }
   function closeAll(){
     document.getElementById('overlay').classList.remove('show');
-    document.getElementById('cartDrawer').classList.remove('show');
-    document.getElementById('productModal').classList.remove('show');
-    document.getElementById('authModal').classList.remove('show');
-    document.getElementById('successModal').classList.remove('show');
+    document.querySelectorAll('.drawer, .modal, .auth-modal, .success-modal').forEach(el => el.classList.remove('show'));
   }
 
   function openProduct(id){
@@ -857,7 +1015,7 @@
     `).join('');
     document.getElementById('modalCat').textContent = p.category;
     document.getElementById('modalTitle').textContent = p.title;
-    document.getElementById('modalRating').innerHTML = `${renderStars(p.rating)} <span>${p.rating} (${Number(p.reviews).toLocaleString('en-IN')} reviews)</span>`;
+    document.getElementById('modalRating').innerHTML = `${renderStars(p.rating)} <span>${p.rating} (${Number(p.reviews).toLocaleString('en-IN')} reviews)</span>${p.sellerName ? `<div class="sold-by">Sold by ${p.sellerName}</div>` : ''}`;
     document.getElementById('modalPrice').textContent = money(p.price);
     document.getElementById('modalMrp').textContent = money(p.mrp);
     document.getElementById('modalOff').textContent = Math.round((1-p.price/p.mrp)*100) + '% off';
@@ -889,6 +1047,32 @@
 
     showOverlay();
     document.getElementById('productModal').classList.add('show');
+    loadProductReviews(id);
+  }
+  async function loadProductReviews(id){
+    const wrap = document.getElementById('reviewsWrap');
+    wrap.innerHTML = `<div class="reviews-head">Reviews</div><div style="font-size:12px;color:var(--ink-45);">Loading…</div>`;
+    try{
+      const reviews = await api(`/products/${id}/reviews`);
+      wrap.innerHTML = `
+        <div class="reviews-head">Reviews (${reviews.length})</div>
+        ${reviews.length === 0
+          ? `<div style="font-size:12.5px;color:var(--ink-45);">No reviews yet — be the first to buy and review this.</div>`
+          : reviews.map(r=>`
+              <div class="review-row">
+                <div class="review-row-top">
+                  <span class="review-name">${r.userName}</span>
+                  <span class="review-date">${new Date(r.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</span>
+                </div>
+                <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+                ${r.comment ? `<div class="review-comment">${r.comment}</div>` : ''}
+              </div>
+            `).join('')
+        }
+      `;
+    }catch(e){
+      wrap.innerHTML = '';
+    }
   }
   function swapModalImage(id, variant, thumbEl){
     const p = PRODUCTS.find(x=>x.id===id);
@@ -913,13 +1097,18 @@
   }
   function openAccountMenu(){
     const lines = [`Logged in as ${currentUser.name} (${currentUser.role})`];
-    if(currentUser.role === 'seller') lines.push('1) Seller dashboard');
-    if(currentUser.role === 'admin') lines.push('1) Seller approvals');
-    lines.push((currentUser.role!=='buyer' ? '2' : '1') + ') Log out');
+    let n = 1;
+    const opts = {};
+    if(currentUser.role === 'seller'){ lines.push(`${n}) Seller dashboard`); opts[n]='seller'; n++; }
+    if(currentUser.role === 'admin'){ lines.push(`${n}) Seller approvals`); opts[n]='admin'; n++; }
+    lines.push(`${n}) My orders`); opts[n]='orders'; n++;
+    lines.push(`${n}) Log out`); opts[n]='logout';
     const choice = prompt(lines.join('\n') + '\n\nType a number:');
-    if(choice === '1' && currentUser.role === 'seller'){ openSellerDashboard(); }
-    else if(choice === '1' && currentUser.role === 'admin'){ openAdminDashboard(); }
-    else if(choice === '2' || (choice === '1' && currentUser.role === 'buyer')){ logout(); }
+    const action = opts[choice];
+    if(action === 'seller') openSellerDashboard();
+    else if(action === 'admin') openAdminDashboard();
+    else if(action === 'orders') openMyOrders();
+    else if(action === 'logout') logout();
   }
   function openAuth(mode){
     authMode = mode;
@@ -998,6 +1187,7 @@
 
   // ---------------- Seller dashboard ----------------
   const SELLER_CATEGORIES = ["Electronics","Fashion","Home","Beauty","Sports","Books"];
+  const ORDER_ITEM_STATUSES = ['placed','packed','shipped','delivered','cancelled'];
   async function openSellerDashboard(){
     showOverlay();
     document.getElementById('sellerDrawer').classList.add('show');
@@ -1007,9 +1197,11 @@
     const body = document.getElementById('sellerBody');
     body.innerHTML = `<div style="text-align:center;padding:30px;color:var(--ink-45);font-size:13px;">Loading…</div>`;
     try{
-      const [{ seller_status }, products] = await Promise.all([
+      const [{ seller_status }, products, earnings, orders] = await Promise.all([
         api('/seller/status'),
-        api('/seller/products')
+        api('/seller/products'),
+        api('/seller/earnings'),
+        api('/seller/orders')
       ]);
       const bannerClass = seller_status === 'approved' ? 'approved' : seller_status === 'rejected' ? 'rejected' : 'pending';
       const bannerText = seller_status === 'approved'
@@ -1020,6 +1212,11 @@
 
       body.innerHTML = `
         <div class="status-banner ${bannerClass}">${bannerText}</div>
+        <div class="earnings-grid">
+          <div class="earnings-card"><div class="earnings-label">Total earned</div><div class="earnings-value">${money(earnings.total)}</div></div>
+          <div class="earnings-card"><div class="earnings-label">Paid out</div><div class="earnings-value" style="color:var(--teal)">${money(earnings.paid)}</div></div>
+          <div class="earnings-card"><div class="earnings-label">Awaiting payout</div><div class="earnings-value" style="color:var(--saffron-dark)">${money(earnings.pending)}</div></div>
+        </div>
         <div class="seller-form">
           <div class="seller-form-title">Add a product</div>
           <div class="field"><label>Title</label><input id="spTitle" type="text" placeholder="e.g. Handmade Leather Wallet"></div>
@@ -1031,6 +1228,12 @@
               </select>
             </div>
             <div class="field"><label>Emoji icon</label><input id="spEmoji" type="text" placeholder="🛍️" maxlength="4"></div>
+          </div>
+          <div class="field">
+            <label>Product photo (optional — falls back to a stock photo if skipped)</label>
+            <input id="spImageFile" type="file" accept="image/*" onchange="handleSellerImageSelect(this)">
+            <div id="spImagePreview" style="margin-top:8px;"></div>
+            <input type="hidden" id="spImageUrl" value="">
           </div>
           <div class="form-row">
             <div class="field"><label>Price (₹)</label><input id="spPrice" type="number" placeholder="999"></div>
@@ -1056,9 +1259,48 @@
             `).join('')
           }
         </div>
+        <div class="seller-form-title" style="margin-top:22px">Incoming orders (${orders.length})</div>
+        <div id="sellerOrderList">
+          ${orders.length === 0 ? `<div class="empty-state" style="padding:24px"><span class="emoji">📬</span>No orders yet.</div>` :
+            orders.map(o=>`
+              <div class="seller-product-row">
+                <div class="emoji-box">${o.imageUrl ? `<img src="${o.imageUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">` : o.emoji}</div>
+                <div class="seller-product-info">
+                  <div class="seller-product-title">${o.title} × ${o.qty}</div>
+                  <div class="seller-product-meta">Order #${o.orderId} · ${o.buyerName} · ${money(o.pricePaid * o.qty)}</div>
+                </div>
+                <select class="order-status-select" onchange="updateOrderItemStatus(${o.orderItemId}, this.value)">
+                  ${ORDER_ITEM_STATUSES.map(s=>`<option value="${s}" ${s===o.status?'selected':''}>${s[0].toUpperCase()+s.slice(1)}</option>`).join('')}
+                </select>
+              </div>
+            `).join('')
+          }
+        </div>
       `;
     }catch(e){
       body.innerHTML = `<div style="text-align:center;padding:30px;color:var(--danger);font-size:13px;">${e.message}</div>`;
+    }
+  }
+  async function handleSellerImageSelect(input){
+    const file = input.files[0];
+    if(!file) return;
+    const preview = document.getElementById('spImagePreview');
+    preview.innerHTML = `<div style="font-size:12px;color:var(--ink-45);">Uploading…</div>`;
+    if(CLOUDINARY_CLOUD_NAME === 'your-cloud-name'){
+      preview.innerHTML = `<div style="font-size:12px;color:var(--danger);">Image upload isn't set up yet — see README for the free Cloudinary setup. Product will use a stock photo for now.</div>`;
+      return;
+    }
+    try{
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method:'POST', body:formData });
+      const data = await res.json();
+      if(!data.secure_url) throw new Error('Upload failed');
+      document.getElementById('spImageUrl').value = data.secure_url;
+      preview.innerHTML = `<img src="${data.secure_url}" style="width:70px;height:70px;object-fit:cover;border-radius:10px;">`;
+    }catch(e){
+      preview.innerHTML = `<div style="font-size:12px;color:var(--danger);">Upload failed — try again.</div>`;
     }
   }
   async function submitSellerProduct(){
@@ -1068,9 +1310,10 @@
     const price = parseInt(document.getElementById('spPrice').value, 10);
     const mrp = parseInt(document.getElementById('spMrp').value, 10);
     const description = document.getElementById('spDesc').value.trim();
+    const image_url = document.getElementById('spImageUrl').value.trim();
     if(!title || !price || !mrp){ showToast('Fill in title, price and MRP'); return; }
     try{
-      await api('/seller/products', { method:'POST', body:{ title, category, emoji, price, mrp, description } });
+      await api('/seller/products', { method:'POST', body:{ title, category, emoji, price, mrp, description, image_url } });
       showToast('Product added');
       await renderSellerDashboard();
     }catch(e){ showToast(e.message); }
@@ -1081,6 +1324,12 @@
       await api('/seller/products/' + id, { method:'DELETE' });
       showToast('Product removed');
       await renderSellerDashboard();
+    }catch(e){ showToast(e.message); }
+  }
+  async function updateOrderItemStatus(orderItemId, status){
+    try{
+      await api('/seller/order-items/' + orderItemId + '/status', { method:'PUT', body:{ status } });
+      showToast('Order status updated');
     }catch(e){ showToast(e.message); }
   }
 
@@ -1094,9 +1343,12 @@
     const body = document.getElementById('adminBody');
     body.innerHTML = `<div style="text-align:center;padding:30px;color:var(--ink-45);font-size:13px;">Loading…</div>`;
     try{
-      const pending = await api('/admin/sellers?status=pending');
-      body.innerHTML = pending.length === 0
-        ? `<div class="empty-state" style="padding:30px"><span class="emoji">✅</span>No sellers waiting for approval.</div>`
+      const [pending, payouts] = await Promise.all([
+        api('/admin/sellers?status=pending'),
+        api('/admin/payouts?status=pending')
+      ]);
+      const sellersHtml = pending.length === 0
+        ? `<div class="empty-state" style="padding:20px"><span class="emoji">✅</span>No sellers waiting for approval.</div>`
         : pending.map(s=>`
             <div class="admin-row">
               <div class="admin-row-info">
@@ -1109,9 +1361,85 @@
               </div>
             </div>
           `).join('');
+
+      const payoutTotal = payouts.reduce((sum,p)=>sum+p.net_amount,0);
+      const payoutsHtml = payouts.length === 0
+        ? `<div class="empty-state" style="padding:20px"><span class="emoji">💸</span>No payouts pending — all sellers are settled up.</div>`
+        : payouts.map(p=>`
+            <div class="payout-row">
+              <div class="payout-row-info">
+                <div class="payout-row-name">${p.seller_name}</div>
+                <div class="payout-row-meta">Order #${p.order_id} · you owe them ${money(p.net_amount)} (commission ${money(p.commission_amount)})</div>
+              </div>
+              <div class="payout-amount">${money(p.net_amount)}</div>
+              <button class="mark-paid-btn" onclick="markPayoutPaid(${p.id})">Mark paid</button>
+            </div>
+          `).join('');
+
+      body.innerHTML = `
+        <div class="seller-form-title">Pending seller approvals</div>
+        ${sellersHtml}
+        <div class="seller-form-title" style="margin-top:24px">Pending payouts to sellers ${payouts.length ? `— ${money(payoutTotal)} total` : ''}</div>
+        ${payoutsHtml}
+      `;
     }catch(e){
       body.innerHTML = `<div style="text-align:center;padding:30px;color:var(--danger);font-size:13px;">${e.message}</div>`;
     }
+  }
+  async function markPayoutPaid(id){
+    if(!confirm('Confirm you have transferred this amount to the seller\'s bank account?')) return;
+    try{
+      await api('/admin/payouts/' + id + '/mark-paid', { method:'POST' });
+      showToast('Payout marked as paid');
+      await renderAdminDashboard();
+    }catch(e){ showToast(e.message); }
+  }
+
+  // ---------------- Buyer order history ----------------
+  async function openMyOrders(){
+    showOverlay();
+    document.getElementById('ordersDrawer').classList.add('show');
+    const body = document.getElementById('ordersBody');
+    body.innerHTML = `<div style="text-align:center;padding:30px;color:var(--ink-45);font-size:13px;">Loading…</div>`;
+    try{
+      const orders = await api('/orders');
+      body.innerHTML = orders.length === 0
+        ? `<div class="empty-state" style="padding:30px"><span class="emoji">📦</span>No orders yet.</div>`
+        : orders.map(o=>`
+            <div class="order-card">
+              <div class="order-card-head">
+                <span>Order #${o.id}</span>
+                <span>${new Date(o.created_at).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'})}</span>
+              </div>
+              ${o.items.map(it=>`
+                <div class="seller-product-row">
+                  <div class="emoji-box">${it.emoji}</div>
+                  <div class="seller-product-info">
+                    <div class="seller-product-title">${it.title} × ${it.qty}</div>
+                    <div class="seller-product-meta">${money(it.price_at_purchase * it.qty)}</div>
+                  </div>
+                  <span class="order-item-status status-${it.status}">${it.status}</span>
+                </div>
+                ${it.status==='delivered' ? `<button class="review-cta" onclick="openReviewForm(${it.product_id},${it.id})">Rate this product</button>` : ''}
+              `).join('')}
+            </div>
+          `).join('');
+    }catch(e){
+      body.innerHTML = `<div style="text-align:center;padding:30px;color:var(--danger);font-size:13px;">${e.message}</div>`;
+    }
+  }
+  function openReviewForm(productId, orderItemId){
+    const rating = prompt('Rate this product 1-5 stars:');
+    const r = parseInt(rating, 10);
+    if(!r || r < 1 || r > 5){ if(rating!==null) showToast('Enter a number from 1 to 5'); return; }
+    const comment = prompt('Optional — say a bit about it:') || '';
+    submitReview(productId, orderItemId, r, comment);
+  }
+  async function submitReview(productId, orderItemId, rating, comment){
+    try{
+      await api(`/products/${productId}/reviews`, { method:'POST', body:{ rating, comment, orderItemId } });
+      showToast('Thanks for your review!');
+    }catch(e){ showToast(e.message); }
   }
   async function reviewSeller(id, action){
     try{

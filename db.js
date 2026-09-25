@@ -30,6 +30,7 @@ async function initDb() {
       price INTEGER NOT NULL,
       mrp INTEGER NOT NULL,
       emoji TEXT,
+      image_url TEXT,
       rating REAL DEFAULT 0,
       reviews INTEGER DEFAULT 0,
       badge TEXT,
@@ -49,6 +50,9 @@ async function initDb() {
       user_id INTEGER NOT NULL REFERENCES users(id),
       total INTEGER NOT NULL,
       status TEXT DEFAULT 'placed',
+      razorpay_order_id TEXT,
+      razorpay_payment_id TEXT,
+      payment_status TEXT NOT NULL DEFAULT 'pending', -- 'pending' | 'paid' | 'failed'
       created_at TIMESTAMP DEFAULT NOW()
     );
 
@@ -56,14 +60,56 @@ async function initDb() {
       id SERIAL PRIMARY KEY,
       order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
       product_id INTEGER NOT NULL REFERENCES products(id),
+      seller_id INTEGER REFERENCES users(id),
       qty INTEGER NOT NULL,
-      price_at_purchase INTEGER NOT NULL
+      price_at_purchase INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'placed' -- 'placed' | 'packed' | 'shipped' | 'delivered' | 'cancelled'
+    );
+
+    CREATE TABLE IF NOT EXISTS reviews (
+      id SERIAL PRIMARY KEY,
+      product_id INTEGER NOT NULL REFERENCES products(id),
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      order_item_id INTEGER NOT NULL REFERENCES order_items(id) UNIQUE, -- one review per purchased item — keeps reviews "verified"
+      rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+      comment TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS payouts (
+      id SERIAL PRIMARY KEY,
+      seller_id INTEGER NOT NULL REFERENCES users(id),
+      order_id INTEGER NOT NULL REFERENCES orders(id),
+      gross_amount INTEGER NOT NULL,      -- what the buyer paid for this seller's items in this order
+      commission_amount INTEGER NOT NULL, -- platform's cut
+      net_amount INTEGER NOT NULL,        -- what the seller is owed
+      status TEXT NOT NULL DEFAULT 'pending', -- 'pending' | 'paid'
+      created_at TIMESTAMP DEFAULT NOW()
     );
   `);
 
-  // ---------- Migration safety net: add columns if this DB was created before Phase 2 ----------
+  // ---------- Migration safety net for DBs created before Phase 3 ----------
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS seller_status TEXT NOT NULL DEFAULT 'none';`);
   await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS seller_id INTEGER REFERENCES users(id);`);
+  await pool.query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS seller_id INTEGER REFERENCES users(id);`);
+  await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS razorpay_order_id TEXT;`);
+  await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS razorpay_payment_id TEXT;`);
+  await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_status TEXT NOT NULL DEFAULT 'pending';`);
+
+  // ---------- Migration safety net for DBs created before Phase 4 ----------
+  await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url TEXT;`);
+  await pool.query(`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'placed';`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS reviews (
+      id SERIAL PRIMARY KEY,
+      product_id INTEGER NOT NULL REFERENCES products(id),
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      order_item_id INTEGER NOT NULL REFERENCES order_items(id) UNIQUE,
+      rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+      comment TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
 
   // ---------- Seed products (only if table is empty) ----------
   const { rows } = await pool.query('SELECT COUNT(*) AS c FROM products');
